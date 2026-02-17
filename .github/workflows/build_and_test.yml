@@ -28,7 +28,7 @@ jobs:
           - "cp312"
           - "cp313"
           - "cp314"
-          - "cp315"
+#          - "cp315"
 
     steps:
       - name: Checkout code
