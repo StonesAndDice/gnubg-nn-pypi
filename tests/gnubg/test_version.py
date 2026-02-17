@@ -1,12 +1,12 @@
 import pytest
-import gnubg_nn
+import gnubg
 
 VERSION_PATTERN = r"^(\d+!)?(\d+)(\.\d+)+([\.\-\_])?((a(lpha)?|b(eta)?|c|r(c|ev)?|pre(view)?)\d*)?(\.?(post|dev)\d*)?$"
 
 @pytest.fixture
 def version_module():
     # Import the version module from within gnubg package
-    import gnubg_nn.__version__ as version
+    import gnubg.__version__ as version
     return version
 
 def test_version_attributes(version_module):
@@ -30,8 +30,8 @@ def test_git_revision(version_module):
         assert all(c in '0123456789abcdef' for c in git_rev), "git_revision must be hexadecimal"
 
 def test_version_values_match():
-    import gnubg_nn
-    import gnubg_nn.__version__ as v
+    import gnubg
+    import gnubg.__version__ as v
 
     assert v.version
     assert v.__version__
