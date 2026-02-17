@@ -1,6 +1,6 @@
 # meson.build
 project(
-    'gnubg',                      # Your project name
+    'gnubg-nn',                      # Your project name
     ['cpp', 'c'],                 # Languages used
     version: run_command(
         ['src/_build_utils/_version.py'],
@@ -12,6 +12,7 @@ project(
 python3 = import('python').find_installation('python3', pure: false)
 python_dep = python3.dependency()
 pkgdir = python3.get_install_dir()
+pkg_name = 'gnubg_nn'
 
 # Custom target to generate __version__.py at build time and install it
 generate_version = custom_target(
@@ -24,17 +25,17 @@ generate_version = custom_target(
     ],
     build_by_default: true,
     install: true,
-    install_dir: join_paths(pkgdir, 'gnubg_nn')
+    install_dir: join_paths(pkgdir, pkg_name)
 )
 
 # Install __init__.py
 install_data(
     'src/gnubgmodule/__init__.py',
-    install_dir: join_paths(pkgdir, 'gnubg_nn')
+    install_dir: join_paths(pkgdir, pkg_name)
 )
 # Install gnubg.pyi
 install_data(
-    'src/gnubgmodule/gnubg.pyi',
+    'src/gnubgmodule/bindings.pyi',
     install_dir: join_paths(pkgdir, 'gnubg_nn')
 )
 
@@ -43,12 +44,7 @@ install_data(
     'src/gnubgmodule/data/gnubg_ts0.bd',
     'src/gnubgmodule/data/gnubg_os0.bd',
     'src/gnubgmodule/data/gnubg_os.db',
-    install_dir: join_paths(pkgdir, 'gnubg_nn', 'data')
-)
-
-install_subdir(
-    'src/gnubg',
-    install_dir: pkgdir
+    install_dir: join_paths(pkgdir, pkg_name, 'data')
 )
 
 conf_data = configuration_data()
@@ -112,7 +108,7 @@ libgnubg_nn = static_library(
     'gnubg_nn',
     c_sources + cpp_sources,
     include_directories : gnubg_inc,
-    cpp_args            : ['-std=c++14'],    # match your C++14 requirement
+    cpp_args            : ['-std=c++14', '-Wno-unused-but-set-variable'],
     install             : false,
     dependencies:       [python_dep],  # ✅ use the Python headers!
 )
@@ -125,20 +121,19 @@ gnubg_dep = declare_dependency(
 
 # Build the Python extension
 py_ext = python3.extension_module(
-    '_gnubg_nn',
-    [],                          # no extra sources; they live in the static lib
+    '_gnubg_nn',              # Name becomes 'nn'
+    [],
     dependencies : [gnubg_dep],
     install      : true,
-    subdir       : 'gnubg_nn',
+    subdir       : 'gnubg_nn', # Placed inside the 'gnubg' folder
 )
 
 test_env = environment()
-# Point python to the directory containing the 'gnubg_nn' package
-test_env.set('PYTHONPATH', join_paths(meson.build_root(), 'src/gnubgmodule'))
+test_env.set('PYTHONPATH', [meson.project_build_root()])
 
 test('python_tests',
     python3,
-    args: ['-m', 'pytest', join_paths(meson.source_root(), 'tests')],
+    args: ['-m', 'pytest', join_paths(meson.project_source_root(), 'tests')],
     env: test_env,
-    workdir: meson.source_root() # So it finds data files if needed
+    workdir: meson.project_source_root()
 )

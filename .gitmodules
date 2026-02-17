@@ -1,6 +1,3 @@
 [submodule "src/gnubg-nn"]
 	path = src/gnubg-nn
 	url = git@github.com:reayd-falmouth/gnubg-nn.git
-[submodule "src/gnubg"]
-	path = src/gnubg
-	url = git@github.com:reayd-falmouth/gnubg.git

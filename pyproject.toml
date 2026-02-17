@@ -6,11 +6,11 @@ requires = [
 build-backend = "mesonpy"
 
 [project]
-name = "gnubg"
-version = "1.1.0a3"
+name = "gnubg-nn"
+version = "1.1.0a4"
 description = "Python3 bindings for GNUBG neural evaluation"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 authors = [
     { name = "David Reay", email = "dr323090@falmouth.ac.uk" }
 ]
