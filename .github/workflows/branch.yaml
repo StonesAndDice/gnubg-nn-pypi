@@ -9,7 +9,6 @@ on:
 jobs:
   branch-naming-policy:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -19,4 +18,7 @@ jobs:
         if: github.ref_type == 'branch' || github.ref_type == 'pull_request'
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          regex: '^(feature|bugfix|hotfix|test)\/[a-z0-9\-_]+$'
+          # Updates:
+          # 1. \d+- allows "123-somename" (GitHub default)
+          # 2. (feature|...)\/ allows "feature/somename"
+          regex: '^((feature|bugfix|hotfix|test)\/|\d+-)[a-z0-9\-_]+$'
