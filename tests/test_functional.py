@@ -2,7 +2,7 @@
 import unittest
 import pytest
 import faulthandler
-import gnubg.nn as nn
+import gnubg_nn as nn
 
 faulthandler.enable()
 

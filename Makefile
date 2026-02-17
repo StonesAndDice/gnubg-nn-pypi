@@ -15,7 +15,7 @@ clean:
 	find . -name "config.h" -not -path "./build/*" -delete
 
 install:
-	pip install --upgrade pip setuptools wheel cibuildwheel twine meson ninja
+	pip install --upgrade pip setuptools wheel cibuildwheel twine meson ninja pytest
 
 build:
 	meson setup build
