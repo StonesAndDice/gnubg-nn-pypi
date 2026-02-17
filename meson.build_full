@@ -1,0 +1,303 @@
+# meson.build
+project(
+    'gnubg',
+    ['cpp', 'c'],
+    version: run_command(['src/_build_utils/_version.py'], check: true).stdout().strip(),
+    meson_version : '>=1.7.0',
+)
+
+# -----------------------------------------------------------------------------
+# 1. Setup Environment & Dependencies
+# -----------------------------------------------------------------------------
+python3 = import('python').find_installation('python3', pure: false)
+python_dep = python3.dependency()
+pkgdir = python3.get_install_dir()
+cc = meson.get_compiler('c')
+
+# Dependencies
+glib_dep = dependency('glib-2.0')
+gthread_dep = dependency('gthread-2.0')
+gmodule_dep = dependency('gmodule-2.0')
+math_dep = cc.find_library('m', required: false)
+
+# Collect all deps
+all_deps = [python_dep, glib_dep, gthread_dep, gmodule_dep, math_dep]
+
+# -----------------------------------------------------------------------------
+# 2. Configuration (config.h)
+# -----------------------------------------------------------------------------
+conf_data = configuration_data()
+
+# --- Compiler Features & Large File Support (LFS) ---
+# We set these flags to ensure 64-bit file offsets are used transparently.
+add_project_arguments('-D_GNU_SOURCE', language: 'c')
+#add_project_arguments('-D_FILE_OFFSET_BITS=64', language: ['c', 'cpp'])
+
+# --- Project/Build Metadata ---
+# Derived from project definition and system commands [cite: 1, 2]
+conf_data.set_quoted('VERSION', meson.project_version())
+conf_data.set_quoted('PACKAGE', 'gnubg')
+conf_data.set_quoted('GETTEXT_PACKAGE', 'gnubg')
+
+# Build Date detection [cite: 2]
+date_cmd = run_command('date', '+%Y%m%d', check: false)
+if date_cmd.returncode() == 0
+  conf_data.set_quoted('BUILD_DATE', date_cmd.stdout().strip())
+else
+  conf_data.set_quoted('BUILD_DATE', '20250101')
+endif
+
+# --- [CRITICAL] GNUBG Feature Flags ---
+# These enable the core logic required by the engine [cite: 3]
+conf_data.set('_CRT_SECURE_NO_WARNINGS', 1)
+conf_data.set('NOMINMAX', 1)
+conf_data.set('LOADED_BO', 1)
+conf_data.set('OS_BEAROFF_DB', 1)
+conf_data.set('USE_MULTITHREAD', 1)
+conf_data.set('MAX_NUMTHREADS', 48)
+conf_data.set('HAVE_GLIB', 1)
+conf_data.set('USE_PYTHON', 1)
+conf_data.set('HAVE_CONFIG_H', 1)
+conf_data.set('HAVE_SOCKETS', 1)
+
+# --- System Headers Detection ---
+# Dynamically check for headers required by both gnubg and gnubg-nn [cite: 4, 46, 88]
+check_headers = [
+    'sys/resource.h', 'sys/socket.h', 'sys/time.h', 'sys/types.h',
+    'sys/stat.h', 'unistd.h', 'mcheck.h', 'string.h', 'strings.h',
+    'stdlib.h', 'stdarg.h', 'fcntl.h', 'memory.h'
+]
+
+foreach h : check_headers
+    if cc.has_header(h)
+        conf_data.set('HAVE_' + h.underscorify().to_upper(), 1)
+    endif
+endforeach
+
+# --- Library Functions Detection ---
+# Detects availability of standard library functions [cite: 4, 47, 89]
+check_functions = [
+    'strcasecmp', 'strncasecmp', 'strdup', 'strstr', 'strtok_r', 'strsep',
+    'strcspn', 'strspn', 'strpbrk', 'memcpy', 'memmove', 'memset',
+    'tolower', 'toupper', 'vprintf', 'getchar', 'putchar',
+    'fgetc_unlocked', 'getc_unlocked', 'getchar_unlocked', 'fputc_unlocked',
+    'putc_unlocked', 'putchar_unlocked', 'feof_unlocked', 'ferror_unlocked',
+    'flockfile', 'funlockfile', 'mknod', 'mknodat', 'sigaction',
+    'sigaddset', 'sigdelset', 'sigismember', 'pthread_equal',
+    'clock_gettime', 'localtime_r', 'isnan', 'isinf', 'pow', 'sqrt'
+]
+
+foreach f : check_functions
+    if cc.has_function(f)
+        conf_data.set('HAVE_' + f.to_upper(), 1)
+    endif
+endforeach
+
+# --- [LFS FIX] Solve stat64 redefinition error ---
+# On modern 64-bit Linux with _FILE_OFFSET_BITS=64, stat is already 64-bit.
+# We explicitly set these to 0 to prevent the source code from trying to
+# define its own conflicting 'stat64' symbols.
+conf_data.set('HAVE_STAT64', 0)
+conf_data.set('HAVE_LSTAT64', 0)
+conf_data.set('HAVE_FSTAT64', 0)
+conf_data.set('HAVE_FSTATAT64', 0)
+
+# --- Paths ---
+conf_data.set_quoted('AC_DATADIR', '/usr/local/share')
+conf_data.set_quoted('AC_PKGDATADIR', '/usr/local/share/gnubg')
+conf_data.set_quoted('AC_DOCDIR', '/usr/local/share/doc/gnubg')
+conf_data.set_quoted('LOCALEDIR', '/usr/share/locale')
+
+# --- Browser Command ---
+host_system = host_machine.system()
+if host_system == 'darwin'
+  conf_data.set_quoted('OPEN_URL_PROG', 'open')
+elif host_system == 'windows'
+  conf_data.set_quoted('OPEN_URL_PROG', 'cmd /c start')
+else
+  conf_data.set_quoted('OPEN_URL_PROG', 'xdg-open')
+endif
+
+# --- Generate config.h ---
+# THIS MUST BE THE LAST STEP for the conf_data object.
+config_h = configure_file(
+    output: 'config.h',
+    configuration: conf_data
+)
+
+# Force inclusion of our generated config.h for all files
+add_project_arguments('-include', 'config.h', language: ['c', 'cpp'])
+# -----------------------------------------------------------------------------
+# 3. Source Definitions
+# -----------------------------------------------------------------------------
+
+# --- A. Neural Net Sources (for gnubg.nn) ---
+gnubg_inc = include_directories(
+    'src/gnubg-nn',
+    'src/gnubg-nn/gnubg',
+    'src/gnubg-nn/gnubg/lib',
+    'src/gnubg-nn/analyze',
+    'src/gnubg-nn/py',
+)
+
+nn_c_sources = files(
+    'src/gnubg-nn/gnubg/bearoffdb.c',
+    'src/gnubg-nn/gnubg/eggmoveg.c',
+    'src/gnubg-nn/gnubg/eval.c',
+    'src/gnubg-nn/gnubg/inputs.c',
+    'src/gnubg-nn/gnubg/mt19937int.c',
+    'src/gnubg-nn/gnubg/positionid.c',
+    'src/gnubg-nn/gnubg/pub_eval.c',
+    'src/gnubg-nn/gnubg/lib/hash.c',
+    'src/gnubg-nn/gnubg/lib/neuralnet.c',
+    'src/gnubg-nn/gnubg/lib/nsse.c',
+)
+
+nn_cpp_sources = files(
+    'src/gnubgmodule/gnubgmodule.cpp',
+    'src/gnubg-nn/analyze/analyze.cc',
+    'src/gnubg-nn/analyze/bm.cc',
+    'src/gnubg-nn/analyze/bms.cc',
+    'src/gnubg-nn/analyze/danalyze.cc',
+    'src/gnubg-nn/analyze/dice_gen.cc',
+    'src/gnubg-nn/analyze/equities.cc',
+    'src/gnubg-nn/analyze/mec.cc',
+    'src/gnubg-nn/analyze/player.cc',
+    'src/gnubg-nn/gnubg/bearoffgammon.cc',
+    'src/gnubg-nn/gnubg/racebg.cc',
+    'src/gnubg-nn/gnubg/osr.cc',
+)
+
+# --- B. Full Engine Sources (for gnubg) ---
+gnubg_full_inc = include_directories(
+    'src/gnubg',
+    'src/gnubg/lib'
+)
+
+gnubg_core_sources = files(
+    'src/gnubg/analysis.c',
+    'src/gnubg/bearoff.c',
+    'src/gnubg/bearoffgammon.c',
+    'src/gnubg/boardpos.c',
+    'src/gnubg/dbprovider.c',
+    'src/gnubg/dice.c',
+    'src/gnubg/eval.c',
+    'src/gnubg/export.c',
+    'src/gnubg/file.c',
+    'src/gnubg/format.c',
+    'src/gnubg/formatgs.c',
+    'src/gnubg/glib-ext.c',
+    'src/gnubg/html.c',
+    'src/gnubg/import.c',
+    'src/gnubg/latex.c',
+    #'src/gnubg/makeweights.c',
+    'src/gnubg/matchequity.c',
+    'src/gnubg/matchid.c',
+    'src/gnubg/mec.c',
+    'src/gnubg/multithread.c',
+    'src/gnubg/openurl.c',
+    'src/gnubg/osr.c',
+    'src/gnubg/output.c',
+    'src/gnubg/positionid.c',
+    'src/gnubg/progress.c',
+    'src/gnubg/randomorg.c',
+    'src/gnubg/relational.c',
+    'src/gnubg/rollout.c',
+    'src/gnubg/set.c',
+    'src/gnubg/sgf.c',
+    'src/gnubg/simpleboard.c',
+    'src/gnubg/text.c',
+    'src/gnubg/timer.c',
+    'src/gnubg/util.c',
+    'src/gnubg/lib/list.c',
+    'src/gnubg/lib/md5.c',
+)
+
+# -----------------------------------------------------------------------------
+# 4. Build Targets
+# -----------------------------------------------------------------------------
+
+# A. STATIC LIB for Neural Net
+libgnubg_nn = static_library(
+    'gnubg_nn_static',
+    nn_c_sources + nn_cpp_sources,
+    include_directories : gnubg_inc,
+    cpp_args            : ['-std=c++14', '-Wno-unused-but-set-variable'],
+    install             : false,
+    dependencies        : all_deps,
+)
+
+gnubg_nn_dep = declare_dependency(
+    include_directories : gnubg_inc,
+    link_with           : libgnubg_nn,
+).as_link_whole()
+
+# B. EXTENSION: gnubg.nn (The Neural Net Module)
+# Name = 'nn'. Subdir = 'gnubg'.
+# Result = site-packages/gnubg/nn.so -> import gnubg.nn
+py_ext_nn = python3.extension_module(
+    'nn',
+    [],
+    dependencies : [gnubg_nn_dep, all_deps],
+    install      : true,
+    subdir       : 'gnubg',
+)
+
+# C. EXTENSION: gnubg._gnubg (The Full Engine Core)
+# Name = '_gnubg'. Subdir = 'gnubg'.
+# Result = site-packages/gnubg/_gnubg.so -> accessed by __init__.py
+py_ext_full = python3.extension_module(
+    '_gnubg',
+    sources: gnubg_core_sources + files('src/gnubgmodule/gnubg_bridge.cpp'),
+    dependencies: all_deps,
+    include_directories: gnubg_full_inc,
+    install: true,
+    subdir: 'gnubg',
+    cpp_args: ['-std=c++14', '-DGNUBG_PYTHON_EXTENSION']
+)
+
+# -----------------------------------------------------------------------------
+# 5. Installs & Tests
+# -----------------------------------------------------------------------------
+
+# Version file
+custom_target(
+    'generate_version',
+    output: '__version__.py',
+    command: [python3, files('src/_build_utils/_version.py'), '--write', '@OUTPUT@'],
+    build_by_default: true,
+    install: true,
+    install_dir: join_paths(pkgdir, 'gnubg') # Install to main pkg
+)
+
+# Install main package Init (gnubg/__init__.py)
+install_data(
+    'src/gnubgmodule/__init__.py',
+    install_dir: join_paths(pkgdir, 'gnubg')
+)
+
+# Install Type Hints (gnubg/gnubg.pyi)
+install_data(
+    'src/gnubgmodule/gnubg.pyi',
+    install_dir: join_paths(pkgdir, 'gnubg')
+)
+
+# Install Data (gnubg/data/...)
+install_data(
+    'src/gnubgmodule/data/gnubg.weights',
+    'src/gnubgmodule/data/gnubg_ts0.bd',
+    'src/gnubgmodule/data/gnubg_os0.bd',
+    'src/gnubgmodule/data/gnubg_os.db',
+    install_dir: join_paths(pkgdir, 'gnubg', 'data')
+)
+
+test_env = environment()
+# PYTHONPATH points to the build root so 'import gnubg' finds the package
+test_env.set('PYTHONPATH', meson.project_build_root())
+
+test('python_tests',
+    python3,
+    args: ['-m', 'pytest', join_paths(meson.project_source_root(), 'tests')],
+    env: test_env,
+    workdir: meson.project_source_root()
+)

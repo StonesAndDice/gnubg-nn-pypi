@@ -7,7 +7,12 @@ configure:
 
 clean:
 	rm -rf build/ dist/ analyze/
-	rm -rf gnubg/gnubg.egg-info
+	rm -rf gnubg/*.egg-info
+	rm -rf *.egg-info
+	find . -name "*.o" -delete
+	find . -name "*.so" -delete
+	find . -name "*.a" -delete
+	find . -name "config.h" -not -path "./build/*" -delete
 
 install:
 	pip install --upgrade pip setuptools wheel cibuildwheel twine meson ninja
