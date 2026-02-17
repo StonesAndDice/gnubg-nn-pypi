@@ -1,5 +1,5 @@
 import unittest
-import gnubg
+import gnubg_nn as gnubg
 import faulthandler
 import pytest
 
