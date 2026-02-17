@@ -1,5 +1,5 @@
 import pytest
-import gnubg
+import gnubg_nn
 
 VERSION_PATTERN = r"^(\d+!)?(\d+)(\.\d+)+([\.\-\_])?((a(lpha)?|b(eta)?|c|r(c|ev)?|pre(view)?)\d*)?(\.?(post|dev)\d*)?$"
 
