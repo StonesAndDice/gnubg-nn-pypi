@@ -27,14 +27,51 @@ all_deps = [python_dep, glib_dep, gthread_dep, gmodule_dep, math_dep]
 # 2. Configuration (config.h)
 # -----------------------------------------------------------------------------
 conf_data = configuration_data()
+
+# --- Feature Flags ---
 conf_data.set('_CRT_SECURE_NO_WARNINGS', 1)
 conf_data.set('NOMINMAX', 1)
 conf_data.set('LOADED_BO', 1)
 conf_data.set('OS_BEAROFF_DB', 1)
 conf_data.set('HAVE_CONFIG_H', 1)
-conf_data.set('USE_GTK', 0)
 conf_data.set('HAVE_GLIB', 1)
 conf_data.set('USE_MULTITHREAD', 1)
+conf_data.set('HAVE_UNISTD_H', 1)
+conf_data.set('HAVE_SYS_TYPES_H', 1)
+conf_data.set('HAVE_SYS_TIME_H', 1)
+
+# --- Standard Autotools Definitions ---
+# These are required by openurl.c and generic gnubg code
+conf_data.set_quoted('PACKAGE', 'gnubg')
+conf_data.set_quoted('LOCALEDIR', '/usr/share/locale') # Placeholder is fine for now
+
+# --- Web Browser Command (for openurl.c) ---
+host_system = host_machine.system()
+if host_system == 'darwin'
+  conf_data.set_quoted('OPEN_URL_PROG', 'open')
+elif host_system == 'windows'
+  conf_data.set_quoted('OPEN_URL_PROG', 'cmd /c start')
+else
+  conf_data.set_quoted('OPEN_URL_PROG', 'xdg-open')
+endif
+
+# --- [CRITICAL FIX] Standard Directory Paths for util.c ---
+# These are required by the C code to compile.
+# We set them to generic defaults. The Python runtime will likely
+# override the actual lookup paths using GNUBGHOME.
+conf_data.set_quoted('AC_DATADIR', '/usr/local/share')
+conf_data.set_quoted('AC_PKGDATADIR', '/usr/local/share/gnubg')
+conf_data.set_quoted('AC_DOCDIR', '/usr/local/share/doc/gnubg')
+
+# --- Version & Date Strings ---
+conf_data.set_quoted('VERSION', meson.project_version())
+
+date_cmd = run_command('date', '+%Y-%m-%d', check: false)
+if date_cmd.returncode() == 0
+  conf_data.set_quoted('BUILD_DATE', date_cmd.stdout().strip())
+else
+  conf_data.set_quoted('BUILD_DATE', '2025-01-01')
+endif
 
 config_h = configure_file(
     output: 'config.h',
@@ -84,7 +121,10 @@ nn_cpp_sources = files(
 )
 
 # --- B. Full Engine Sources (for gnubg) ---
-gnubg_full_inc = include_directories('src/gnubg')
+gnubg_full_inc = include_directories(
+    'src/gnubg',
+    'src/gnubg/lib'
+)
 
 gnubg_core_sources = files(
     'src/gnubg/analysis.c',
@@ -102,7 +142,7 @@ gnubg_core_sources = files(
     'src/gnubg/html.c',
     'src/gnubg/import.c',
     'src/gnubg/latex.c',
-    'src/gnubg/makeweights.c',
+    #'src/gnubg/makeweights.c',
     'src/gnubg/matchequity.c',
     'src/gnubg/matchid.c',
     'src/gnubg/mec.c',
@@ -121,6 +161,8 @@ gnubg_core_sources = files(
     'src/gnubg/text.c',
     'src/gnubg/timer.c',
     'src/gnubg/util.c',
+    'src/gnubg/lib/list.c',
+    'src/gnubg/lib/md5.c',
 )
 
 # -----------------------------------------------------------------------------
@@ -132,7 +174,7 @@ libgnubg_nn = static_library(
     'gnubg_nn_static',
     nn_c_sources + nn_cpp_sources,
     include_directories : gnubg_inc,
-    cpp_args            : ['-std=c++14'],
+    cpp_args            : ['-std=c++14', '-Wno-unused-but-set-variable'],
     install             : false,
     dependencies        : all_deps,
 )
@@ -203,11 +245,11 @@ install_data(
 
 test_env = environment()
 # PYTHONPATH points to the build root so 'import gnubg' finds the package
-test_env.set('PYTHONPATH', meson.build_root())
+test_env.set('PYTHONPATH', meson.project_build_root())
 
 test('python_tests',
     python3,
-    args: ['-m', 'pytest', join_paths(meson.source_root(), 'tests')],
+    args: ['-m', 'pytest', join_paths(meson.project_source_root(), 'tests')],
     env: test_env,
-    workdir: meson.source_root()
+    workdir: meson.project_source_root()
 )
