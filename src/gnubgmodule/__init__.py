@@ -7,7 +7,7 @@ if os.name == "nt" and hasattr(os, "add_dll_directory"):
         os.add_dll_directory(str(pkgdir))
 
 # Import your compiled extension module
-from ._gnubg import *
+from ._gnubg_nn import *
 
 # Optional: Expose a namespace
 __all__ = [
