@@ -131,3 +131,14 @@ py_ext = python3.extension_module(
     install      : true,
     subdir       : 'gnubg_nn',
 )
+
+test_env = environment()
+# Point python to the directory containing the 'gnubg_nn' package
+test_env.set('PYTHONPATH', join_paths(meson.build_root(), 'src/gnubgmodule'))
+
+test('python_tests',
+    python3,
+    args: ['-m', 'pytest', join_paths(meson.source_root(), 'tests')],
+    env: test_env,
+    workdir: meson.source_root() # So it finds data files if needed
+)
