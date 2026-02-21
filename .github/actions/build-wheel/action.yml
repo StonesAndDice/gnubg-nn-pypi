@@ -42,7 +42,7 @@ runs:
       if: ${{ inputs.os == 'ubuntu-latest' || inputs.os == 'macos-13' || inputs.os == 'macos-14' }}
       shell: bash
       env:
-        CIBW_SKIP: "pp* *-win32"
+        CIBW_SKIP: "*-win32"
         CIBW_BUILD: "${{ inputs.python }}-*"
         CIBW_ARCHS_MACOS: "native"
         CIBW_PLATFORM: ${{ inputs.os == 'ubuntu-latest' && 'linux' || (inputs.os == 'macos-13' && 'macos') || (inputs.os == 'macos-14' && 'macos') || (inputs.os == 'windows-latest' && 'windows') }}
@@ -66,7 +66,7 @@ runs:
       if: ${{ inputs.os == 'windows-latest' }}
       shell: pwsh
       env:
-        CIBW_SKIP: "pp* *-win32"
+        CIBW_SKIP: "*-win32"
         CIBW_BUILD: "${{ inputs.python }}-*"
         CIBW_ARCHS_MACOS: "native"
         CIBW_PLATFORM: ${{ inputs.os == 'ubuntu-latest' && 'linux' || (inputs.os == 'macos-13' && 'macos') || (inputs.os == 'macos-14' && 'macos') || (inputs.os == 'windows-latest' && 'windows') }}
