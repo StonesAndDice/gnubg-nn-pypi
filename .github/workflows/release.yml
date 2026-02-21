@@ -53,5 +53,5 @@ jobs:
       - name: Upload to PyPI or TestPyPI
         env:
           TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ inputs.environment == 'pypi' && secrets.PYPI_TOKEN || secrets.TEST_PYPI_TOKEN }}
+          TWINE_PASSWORD: ${{ inputs.environment == 'pypi' && secrets.PYPI_TOKEN || secrets.PYPI_TEST_TOKEN }}
         run: twine upload --verbose --repository ${{ inputs.environment }} wheelhouse/*.whl
