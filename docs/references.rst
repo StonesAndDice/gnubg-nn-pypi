@@ -1,7 +1,7 @@
 References
 ==========
 
-This project builds upon the open-source GNU Backgammon engine, its neural network design, and various community tools. The following resources provide deeper background into the theory and implementation details.
+This package (*gnubg-nn*) is the **neural network evaluation library** from the GNU Backgammon project — not the full backgammon application. It builds upon the open-source GNU Backgammon engine, its neural network design, and various community tools. The following resources provide deeper background into the theory and implementation details.
 
 Official Documentation
 ----------------------
@@ -30,10 +30,10 @@ Neural Networks and AI Concepts
   https://www.bkgm.com/books/Robertie-LearningFromTheMachine.html
 
 - **Backgammon Neural Net Evaluation (GNUBG)**
-  Explained in the official manual and implemented in `eval.c`, `neuralnet.c`, and `getinput.c`.
+  The neural network evaluation code used by both the full GNUBG application and this library. Explained in the official manual and implemented in `eval.c`, `neuralnet.c`, and `getinput.c`.
 
 - **Match Equity Tables and Cube Handling**
-  See the "Match Equity Table" section of the GNUBG Manual and references therein.
+  See the "Match Equity Table" section of the GNU Backgammon manual and references therein.
 
 Python and Project Utilities
 ----------------------------
@@ -59,6 +59,6 @@ Licenses
 
 ---
 
-For bug reports or improvements to the original GNUBG engine, visit:
+For bug reports or improvements to the full GNU Backgammon application, visit:
 https://savannah.gnu.org/projects/gnubg/
 

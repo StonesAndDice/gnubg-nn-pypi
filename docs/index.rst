@@ -1,7 +1,8 @@
 .. only:: html
 
-   GNUBG Documentation
-   ===========================
+   GNUBG Neural Networks — Documentation
+   ======================================
+   This package is the neural network evaluation library, not the full backgammon application.
 
 .. include:: readme.rst
 

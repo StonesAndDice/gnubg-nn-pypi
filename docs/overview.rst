@@ -1,7 +1,7 @@
 Overview
 ========
 
-**`gnubg-nn-pypi`** is a Python package that provides bindings to the neural network evaluation engine from GNU Backgammon (GNUBG). It allows developers and researchers to evaluate backgammon positions using the same logic and weights that power one of the strongest backgammon AIs in existence.
+**`gnubg-nn-pypi`** is a Python package that provides bindings to the **GNUBG neural network evaluation library** — the same engine used by the full `GNU Backgammon <https://www.gnu.org/software/gnubg/>`_ application for position analysis and cube decisions, but as a standalone library. This package is the neural network library only; it is not the full backgammon application (GUI, match play). It allows developers and researchers to evaluate backgammon positions using the same logic and weights that power one of the strongest backgammon AIs in existence.
 
 This package is ideal for:
 
@@ -17,12 +17,12 @@ Features
 - Load and use official GNUBG weights
 - Generate GNUBG-style 250-feature input vectors from Position IDs
 - Access low-level evaluation scores: win/gammon/backgammon probabilities
-- Python 3 bindings to native C++ GNUBG library
+- Python 3 bindings to the native GNUBG neural network library
 
-Why GNUBG?
-----------
+Why this library?
+-----------------
 
-GNU Backgammon is a free and open-source world-class backgammon engine. Its evaluation pipeline combines neural nets, equity lookups, and rollout simulations. With `gnubg-nn-pypi`, you get the core NN evaluation logic in Python, making it easy to integrate into modern workflows without running the full GUI or CLI.
+GNU Backgammon (GNUBG) is a free and open-source world-class backgammon application. Its evaluation pipeline combines neural nets, equity lookups, and rollout simulations. With `gnubg-nn-pypi`, you get the **neural network evaluation library** from GNUBG in Python — the same logic used by the full application — so you can integrate it into scripts and tools without running the full GUI or CLI.
 
 About Backgammon
 -----------------
