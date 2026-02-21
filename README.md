@@ -1,41 +1,41 @@
 <h1 align="center">
-<img src="https://raw.githubusercontent.com/reayd-falmouth/gnubg-nn-pypi/refs/heads/main/img/banner.png">
+<img src="https://raw.githubusercontent.com/StonesAndDice/gnubg-nn-pypi/refs/heads/main/img/banner.png">
 
-GNUBG
+GNUBG Neural Networks
 </h1>
 
 [![PyPI Downloads](https://img.shields.io/pypi/dm/gnubg-nn-pypi.svg?label=PyPI%20downloads)](https://pypi.org/project/gnubg-nn-pypi/)
 [![Conda Downloads](https://img.shields.io/conda/dn/conda-forge/gnubg-nn-pypi.svg?label=Conda%20downloads)](https://anaconda.org/conda-forge/gnubg-nn-pypi/)
-[![GitHub issues](https://img.shields.io/github/issues/gnubg/gnubg-nn-pypi.svg)](https://github.com/reayd-falmouth/gnubg-nn-pypi/issues)
+[![GitHub issues](https://img.shields.io/github/issues/gnubg/gnubg-nn-pypi.svg)](https://github.com/StonesAndDice/gnubg-nn-pypi/issues)
 [![License](https://img.shields.io/badge/license-GPL%20v2-blue.svg)](#license)
 [![Stack Overflow](https://img.shields.io/badge/stackoverflow-Ask%20questions-blue.svg)](https://stackoverflow.com/questions/tagged/gnubg)
 
-GNUBG NeuralNet Python bindings bring the powerful GNUBG backgammon neural-network engine to Python 3.
+**GNUBG Neural Networks** (this package, `gnubg-nn`) is a *library* that provides Python bindings to the GNUBG neural-network evaluation engine — the same engine used for position analysis and cube decisions in the full [GNU Backgammon](https://www.gnu.org/software/gnubg/) application, but packaged as a standalone library for use in scripts, analysis tools, and applications. It is not the full backgammon game (GUI, match play, etc.).
 
 ## Quick Start
 
-`gnubg` is a native Python extension module that wraps the GNU Backgammon neural-net evaluation engine, so you can call 
-the same position-analysis and cube-decision routines that power the GUI from any Python 3.8–3.13 script or application. It’s ideal for batch processing, data-science workflows, or building custom tools and UIs.
+`gnubg_nn` is a native Python extension module that wraps the GNUBG neural-net evaluation library, so you can call 
+the same position-analysis and cube-decision routines that power the full GNU Backgammon application from any Python 3.10+ script or application. It’s ideal for batch processing, data-science workflows, or building custom tools and UIs.
 
 ### Installation
 
 ```bash
-pip install gnubg
+pip install gnubg-nn
 ````
 
 ### Getting Started
 
 ```python
-import gnubg
+import gnubg_nn
 
 # Load the engine (weights, bear-off tables, etc. are initialized)
-gnubg.initnet()
+gnubg_nn.initnet()
 
 # Convert a position key (20-char A–Z or 14-char Base64) to a board
-board = gnubg.boardfromkey("4HPwATDgc/ABMA")
+board = gnubg_nn.boardfromkey("4HPwATDgc/ABMA")
 
 # Evaluate win/gammon/backgammon probabilities and equity at 4 plies
-win, gamm, bg, equity = gnubg.probabilities(board, 4)
+win, gamm, bg, equity = gnubg_nn.probabilities(board, 4)
 
 print(f"Win: {win:.3f}, Gammon: {gamm:.3f}, Backgammon: {bg:.3f}, Equity: {equity:.3f}")
 ```
@@ -44,11 +44,11 @@ That’s all you need to get up and running! For detailed API docs, advanced bui
 sections below or visit the full documentation on [ReadTheDocs](https://gnubg.readthedocs.io/en/latest/).
 
 * **ReadTheDocs** [https://gnubg.readthedocs.io/en/latest/](https://gnubg.readthedocs.io/en/latest/)
-* **Website:** [https://www.gnu.org/software/gnubg/](https://www.gnu.org/software/gnubg/)
+* **GNU Backgammon (full application):** [https://www.gnu.org/software/gnubg/](https://www.gnu.org/software/gnubg/)
 * **Original Documentation:** [http://www.gnubg.org/documentation/doku.php?id=gnu_backgammon_faq](http://www.gnubg.org/documentation/doku.php?id=gnu_backgammon_faq)
 * **Mailing list:** [https://lists.gnu.org/mailman/listinfo/gnubg](https://lists.gnu.org/mailman/listinfo/gnubg)
-* **Source code:** [https://github.com/reayd-falmouth/gnubg-nn-pypi](https://github.com/reayd-falmouth/gnubg-nn-pypi)
-* **GNUBG Project:** [https://git.savannah.gnu.org/cgit/gnubg/gnubg-nn.git](https://git.savannah.gnu.org/cgit/gnubg/gnubg-nn.git)
+* **Source code:** [https://github.com/StonesAndDice/gnubg-nn-pypi](https://github.com/StonesAndDice/gnubg-nn-pypi)
+* **GNUBG Neural Networks (gnubg-nn) upstream:** [https://git.savannah.gnu.org/cgit/gnubg/gnubg-nn.git](https://git.savannah.gnu.org/cgit/gnubg/gnubg-nn.git)
 * **Contributing:** [https://savannah.gnu.org/people/](https://savannah.gnu.org/people/)
 * **Credits:** [https://git.savannah.gnu.org/cgit/gnubg.git/tree/credits.sh](https://git.savannah.gnu.org/cgit/gnubg.git/tree/credits.sh)
 
@@ -85,7 +85,7 @@ It provides:
 gnubg-nn-pypi has some basic unit testing. After installation, run:
 
 ```bash
-python3 -m unittest discover -s gnubg.tests
+python3 -m unittest discover -s gnubg_nn.tests
 ```
 ## AI-Assisted Development
 
@@ -103,7 +103,7 @@ These models were used to assist with code generation, documentation drafting, a
 
 ## Code of Conduct
 
-Please read the [Code of Conduct](https://github.com/reayd-falmouth/gnubg-nn-pypi/blob/main/CONDUCT.md) to learn how to interact positively.
+Please read the [Code of Conduct](https://github.com/StonesAndDice/gnubg-nn-pypi/blob/main/CONDUCT.md) to learn how to interact positively.
 
 ## Contributing
 
@@ -118,17 +118,17 @@ Your expertise and enthusiasm are welcome! You can contribute by:
 * Assisting with outreach and onboarding
 * Writing grant proposals or helping with fundraising
 
-For more information, see our [Contributing Guide](https://github.com/reayd-falmouth/gnubg-nn-pypi/blob/main/CONTRIBUTING.md). If you’re unsure where to start, open an issue or join the discussion on our mailing list!
+For more information, see our [Contributing Guide](https://github.com/StonesAndDice/gnubg-nn-pypi/blob/main/CONTRIBUTING.md). If you’re unsure where to start, open an issue or join the discussion on our mailing list!
 
 ## Acknowledgments
 
-This project builds upon the extensive work of the GNU Backgammon (GNUBG) community. Specifically the 
+This project builds upon the extensive work of the GNU Backgammon (GNUBG) community. The *gnubg-nn* library is the neural network evaluation component; the full backgammon application (GUI, match play, etc.) is maintained separately. We specifically acknowledge the 
 [pygnubg](https://git.savannah.gnu.org/cgit/gnubg/gnubg-nn.git/tree/py) program developed by Joseph Heled.
 
-We express our gratitude to all contributors who have dedicated their time and expertise to the development of GNUBG.
+We express our gratitude to all contributors who have dedicated their time and expertise to the development of the GNUBG neural network library and its Python bindings.
 
-- **AUTHORS.md**: A list of primary contributors to the `gnubg-nn-pypi` project can be found [here](https://github.com/reayd-falmouth/gnubg-nn-pypi/blob/main/AUTHORS.md).
-- **GNUBG credits.sh**: For a comprehensive list of contributors to the core GNUBG project, please refer to the [credits.sh](https://git.savannah.gnu.org/cgit/gnubg.git/tree/credits.sh) file.
+- **AUTHORS.md**: A list of primary contributors to the `gnubg-nn-pypi` project can be found [here](https://github.com/StonesAndDice/gnubg-nn-pypi/blob/main/AUTHORS.md).
+- **GNU Backgammon (full project) credits.sh**: For a comprehensive list of contributors to the full GNUBG application, please refer to the [credits.sh](https://git.savannah.gnu.org/cgit/gnubg.git/tree/credits.sh) file.
 
 We also thank the broader GNUBG community, including testers, translators, and mailing list participants, for their invaluable support.
 

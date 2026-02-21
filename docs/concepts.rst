@@ -2,7 +2,7 @@
 Core Concepts
 =============
 
-This section introduces the key internal concepts and data structures used by the `gnubg-nn-pypi` library, drawn from GNU Backgammon's original architecture.
+This section introduces the key internal concepts and data structures used by the `gnubg-nn-pypi` library. They are drawn from the GNUBG neural network evaluation code (the same logic used by the full GNU Backgammon application, but exposed here as a standalone library).
 
 Position ID
 -----------
@@ -12,9 +12,9 @@ A **Position ID** encodes the entire backgammon board state into a short alphanu
 - Checkers on the bar
 - Checkers borne off
 
-It is base64-encoded and typically 14 characters long. GNUBG uses Position IDs for fast hashing and analysis.
+It is base64-encoded and typically 14 characters long. The GNUBG neural network library uses Position IDs for fast hashing and analysis.
 
-You can convert between Position IDs and board state programmatically using this package's helper tools or GNUBG.
+You can convert between Position IDs and board state programmatically using this package's helper tools.
 
 Match ID
 --------
@@ -30,7 +30,7 @@ Match IDs are crucial for match-aware equity calculations and cubeful evaluation
 Neural Networks
 ---------------
 
-GNU Backgammon uses multiple neural networks to evaluate different game phases:
+The GNUBG neural network library uses multiple neural networks to evaluate different game phases:
 
 - **Contact net** – for standard gameplay with both players interacting
 - **Race net** – for bear-off races
@@ -57,7 +57,7 @@ Types:
 - **One-sided**: equity when only one player has checkers
 - **Two-sided**: both players have checkers
 
-GNU Backgammon can use in-memory or disk-based databases for bearoff. These are loaded at startup and used when positions match supported database shapes.
+The library can use in-memory or disk-based bearoff databases (loaded at startup), used when positions match supported database shapes.
 
 - Supported up to 15 checkers on first 6 points
 - Optional support for **Hypergammon** (3-checker variant)
@@ -65,7 +65,7 @@ GNU Backgammon can use in-memory or disk-based databases for bearoff. These are 
 Evaluation Flow
 ---------------
 
-When evaluating a position, GNUBG (and this package) follows these steps:
+When evaluating a position, the library follows these steps:
 
 1. **Classify** the position: race, crashed, or contact
 2. If in **bearoff DB**, return exact equity
@@ -78,5 +78,5 @@ Additional logic may include:
 - **Noise injection**: Simulate human-like variability
 - **Evaluation depth**: 0-ply, 1-ply, or 2-ply lookahead
 
-These mechanisms allow GNUBG and `gnubg-nn-pypi` to evaluate complex decisions with high precision.
+These mechanisms allow the library to evaluate complex decisions with high precision.
 
