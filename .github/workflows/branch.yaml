@@ -22,4 +22,4 @@ jobs:
           # 1. \d+- allows "123-somename" (GitHub default) and "1-WORDS"
           # 2. (feature|fix|...)\/ allows "feature/somename", "fix/1-WORDS"
           # 3. [a-zA-Z0-9\-_]+ allows uppercase in names (e.g. WORDS)
-          regex: '^((feature|bugfix|hotfix|test|fix)\/|\d+-)[a-zA-Z0-9\-_]+$'
+          regex: '^((feature|bugfix|hotfix|test|fix|docs)\/|\d+-)[a-zA-Z0-9\-_]+$'

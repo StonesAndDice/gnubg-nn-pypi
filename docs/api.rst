@@ -2,7 +2,7 @@
 API Reference
 =============
 
-This section documents the public Python API provided by the `gnubg-nn-pypi` package. It includes functions for evaluating positions, loading neural nets, and accessing internal neural net state.
+This section documents the public Python API provided by the `gnubg-nn-pypi` package — the GNUBG **neural network evaluation library** (position analysis, cube decisions, rollouts), not the full GNU Backgammon application. It includes functions for evaluating positions, loading neural nets, and accessing internal neural net state.
 
 gnubg.bearoff_id_2_pos(id) -> Tuple[int, int, int, int, int, int]
 -----------------------------------------------------------------
