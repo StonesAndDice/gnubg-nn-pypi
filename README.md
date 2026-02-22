@@ -4,9 +4,12 @@
 GNUBG Neural Networks
 </h1>
 
-[![PyPI Downloads](https://img.shields.io/pypi/dm/gnubg-nn-pypi.svg?label=PyPI%20downloads)](https://pypi.org/project/gnubg-nn-pypi/)
-[![Conda Downloads](https://img.shields.io/conda/dn/conda-forge/gnubg-nn-pypi.svg?label=Conda%20downloads)](https://anaconda.org/conda-forge/gnubg-nn-pypi/)
-[![GitHub issues](https://img.shields.io/github/issues/gnubg/gnubg-nn-pypi.svg)](https://github.com/StonesAndDice/gnubg-nn-pypi/issues)
+[![PyPI Downloads](https://img.shields.io/pypi/dm/gnubg-nn.svg?label=PyPI%20downloads)](https://pypi.org/project/gnubg-nn/)
+[![Build & test wheels](https://github.com/StonesAndDice/gnubg-nn-pypi/actions/workflows/build_and_test.yml/badge.svg?branch=main)](https://github.com/StonesAndDice/gnubg-nn-pypi/actions/workflows/build_and_test.yml)
+[![C/C++ Lint](https://github.com/StonesAndDice/gnubg-nn-pypi/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/StonesAndDice/gnubg-nn-pypi/actions/workflows/lint.yml)
+[![Branch naming](https://github.com/StonesAndDice/gnubg-nn-pypi/actions/workflows/branch.yaml/badge.svg?branch=main)](https://github.com/StonesAndDice/gnubg-nn-pypi/actions/workflows/branch.yaml)
+[![Release to PyPI](https://github.com/StonesAndDice/gnubg-nn-pypi/actions/workflows/release.yml/badge.svg)](https://github.com/StonesAndDice/gnubg-nn-pypi/actions/workflows/release.yml)
+[![GitHub issues](https://img.shields.io/github/issues/StonesAndDice/gnubg-nn-pypi.svg)](https://github.com/StonesAndDice/gnubg-nn-pypi/issues)
 [![License](https://img.shields.io/badge/license-GPL%20v2-blue.svg)](#license)
 [![Stack Overflow](https://img.shields.io/badge/stackoverflow-Ask%20questions-blue.svg)](https://stackoverflow.com/questions/tagged/gnubg)
 
