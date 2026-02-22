@@ -56,9 +56,10 @@ KNOWN_BEST_OPENING_MOVES = {
         ((24, 15),),
         ((24, 21), (21, 15)),  # same as 24/15 in two steps
     ),
-    (4, 5): (  # 5-4: 24/20 13/8 preferred; 13/9 13/8 alternative
+    (4, 5): (  # 5-4: 24/20 13/8 preferred; 13/9 13/8, 24/20 20/15 alternatives
         ((24, 20), (13, 8)),
         ((13, 9), (13, 8)),
+        ((24, 20), (20, 15)),  # same as 24/15 in two steps (4+5)
     ),
     (4, 6): (  # 6-4: 24/18 13/9 preferred; 8/2 6/2, 24/14 (or 24/20 20/14) alternatives
         ((24, 18), (13, 9)),
