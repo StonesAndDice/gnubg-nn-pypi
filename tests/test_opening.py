@@ -3,13 +3,71 @@ Tests for opening rolls and opening replies.
 
 Verifies that from the initial backgammon position we get valid legal moves
 for every opening roll, and that after an opening move the opponent's replies
-work correctly.
+work correctly. Also checks that the engine's best_move() matches known
+theoretical best opening moves (from rollout/computer analysis, e.g. bkgm.com).
 """
 import pytest
 import gnubg_nn as nn
 
 # Opening position ID used by the engine (standard start, X to move).
 OPENING_POSITION_ID = "4HPwATDgc/ABMA"
+
+# Preferred plays and close alternatives for opening rolls (1–24 notation).
+# Each key is (d1, d2); value is a tuple of acceptable moves, each move is ((from, to), ...).
+# Source: standard rollout/opening theory (e.g. bkgm.com).
+# Format: preferred first, then alternatives; "—" means no close alternative.
+KNOWN_BEST_OPENING_MOVES = {
+    (1, 2): (  # 2-1: 13/11 6/5 preferred; 24/23 13/11 alternative
+        ((13, 11), (6, 5)),
+        ((24, 23), (13, 11)),
+    ),
+    (1, 3): (((8, 5), (6, 5)),),   # 3-1: 8/5 6/5 only
+    (1, 4): (  # 4-1: 24/23 13/9 preferred; 13/9 6/5 alternative
+        ((24, 23), (13, 9)),
+        ((13, 9), (6, 5)),
+    ),
+    (1, 5): (  # 5-1: 24/23 13/8 preferred; 13/8 6/5 alternative
+        ((24, 23), (13, 8)),
+        ((13, 8), (6, 5)),
+    ),
+    (1, 6): (((13, 7), (8, 7)),),   # 6-1: 13/7 8/7 only
+    (2, 3): (  # 3-2: 24/21 13/11 preferred; 13/11 13/10, 24/22 13/10 alternatives
+        ((24, 21), (13, 11)),
+        ((13, 11), (13, 10)),
+        ((24, 22), (13, 10)),
+    ),
+    (2, 4): (((8, 4), (6, 4)),),   # 4-2: 8/4 6/4 only
+    (2, 5): (  # 5-2: 24/22 13/8 preferred; 13/11 13/8 alternative
+        ((24, 22), (13, 8)),
+        ((13, 11), (13, 8)),
+    ),
+    (2, 6): (((24, 18), (13, 11)),),   # 6-2: 24/18 13/11 only
+    (3, 4): (  # 4-3: 13/10 13/9 preferred; 24/21 13/9, 24/20 13/10 alternatives
+        ((13, 10), (13, 9)),
+        ((24, 21), (13, 9)),
+        ((24, 20), (13, 10)),
+    ),
+    (3, 5): (((8, 3), (6, 3)),),   # 5-3: 8/3 6/3 only
+    (3, 6): (  # 6-3: 24/18 13/10 preferred; 24/15 (or 24/21 21/15) alternative
+        ((24, 18), (13, 10)),
+        ((24, 15),),
+        ((24, 21), (21, 15)),  # same as 24/15 in two steps
+    ),
+    (4, 5): (  # 5-4: 24/20 13/8 preferred; 13/9 13/8 alternative
+        ((24, 20), (13, 8)),
+        ((13, 9), (13, 8)),
+    ),
+    (4, 6): (  # 6-4: 24/18 13/9 preferred; 8/2 6/2, 24/14 (or 24/20 20/14) alternatives
+        ((24, 18), (13, 9)),
+        ((8, 2), (6, 2)),
+        ((24, 14),),
+        ((24, 20), (20, 14)),  # same as 24/14 in two steps
+    ),
+    (5, 6): (  # 6-5: 24/13 only (or 24/18 18/13 in two steps)
+        ((24, 13),),
+        ((24, 18), (18, 13)),
+    ),
+}
 
 
 # All 21 opening rolls: 15 non-doubles (order doesn't matter for count) + 6 doubles.
@@ -66,6 +124,38 @@ class TestOpeningRolls:
             move = engine.pub_best_move(opening_board, d1, d2)
             assert isinstance(move, (list, tuple)), f"pub_best_move({d1},{d2}) should return list/tuple"
             assert len(move) >= 2, "pub_best_move should return at least one (from, to) pair"
+
+    def test_best_move_matches_known_opening_theory(self, opening_board, engine):
+        """Engine best_move() matches known theoretical opening moves (preferred or close alternatives).
+
+        Reference: standard rollout/opening theory table (preferred play + close alternatives).
+        For each opening roll, the engine's move must match one of the accepted plays.
+        """
+        for (d1, d2), accepted_moves in KNOWN_BEST_OPENING_MOVES.items():
+            result = engine.best_move(opening_board, d1, d2)
+            assert isinstance(result, tuple) and len(result) >= 1
+            if all(
+                isinstance(p, (list, tuple)) and len(p) == 2
+                for p in result
+            ):
+                steps = result
+            else:
+                steps = result[0]
+            # Normalise to set of (from, to) pairs (single-step moves are one pair)
+            if len(steps) == 2 and isinstance(steps[0], int) and isinstance(steps[1], int):
+                got = frozenset({tuple(steps)})
+            else:
+                got = frozenset(tuple(p) for p in steps)
+            accepted_sets = []
+            for move in accepted_moves:
+                if len(move) == 2 and isinstance(move[0], int) and isinstance(move[1], int):
+                    accepted_sets.append(frozenset({tuple(move)}))
+                else:
+                    accepted_sets.append(frozenset(tuple(p) for p in move))
+            assert got in accepted_sets, (
+                f"Opening {d1}-{d2}: engine played {steps}, "
+                f"expected one of {accepted_moves}"
+            )
 
 
 class TestOpeningReplies:
