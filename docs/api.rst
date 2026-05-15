@@ -725,3 +725,63 @@ Available Methods
    gset.seed(42)
    gset.score(3, 2)
    gset.cube('O', 2, False)
+
+Engine Initialisation
+---------------------
+
+The GNUBG neural-network engine (weights, bearoff tables, opening book) is initialised **automatically when you import the package**. You do not need to call any initialisation function:
+
+.. code-block:: python
+
+   import gnubg_nn  # engine ready immediately
+
+If you encounter examples from the original ``pygnubg`` library that call ``initnet()`` or ``gnubg.initnet()``, those calls are not needed and will raise ``AttributeError`` — simply remove them.
+
+Migration from pygnubg / Legacy Names
+--------------------------------------
+
+The ``gnubg-nn`` package modernises function names relative to the original ``pygnubg`` library. If you are porting old code, use the following mapping:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 40 20
+
+   * - Old name (pygnubg)
+     - New name (gnubg-nn)
+     - Notes
+   * - ``initnet()``
+     - *(not needed)*
+     - Auto-called on import
+   * - ``boardfromkey(key)``
+     - ``board_from_position_key(key)``
+     - 20-char A–Z key
+   * - ``boardfromid(id)``
+     - ``board_from_position_id(id)``
+     - 14-char Base64 Position ID
+   * - ``keyofboard(board)``
+     - ``key_of_board(board)``
+     -
+   * - ``posid(board)`` / ``id(board)``
+     - ``position_id(board)``
+     -
+   * - ``bestmove(...)``
+     - ``best_move(...)``
+     -
+   * - ``pubbestmove(board, d1, d2)``
+     - ``pub_best_move(board, d1, d2)``
+     -
+
+Deprecated aliases (``boardfromkey``, ``boardfromid``, ``bestmove``) are available in ``gnubg_nn`` for backwards compatibility but will be removed in a future release.
+
+Package Name
+------------
+
+.. warning::
+
+   The PyPI package name is ``gnubg-nn``, **not** ``gnubg``. Installing ``gnubg`` installs the unrelated full GNU Backgammon application package, which exposes a different and incompatible API. Always install with::
+
+      pip install gnubg-nn
+
+   and import with::
+
+      import gnubg_nn

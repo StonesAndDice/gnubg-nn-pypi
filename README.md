@@ -22,25 +22,38 @@ the same position-analysis and cube-decision routines that power the full GNU Ba
 
 ### Installation
 
+> **Important:** The PyPI package name is `gnubg-nn`, not `gnubg`. Installing `gnubg` will install the unrelated full GNU Backgammon application. The correct command is:
+
 ```bash
 pip install gnubg-nn
-````
+```
+
+Then import it as:
+
+```python
+import gnubg_nn
+```
+
+> **Note:** The engine (neural-network weights, bear-off tables, etc.) initialises automatically on import — you do **not** need to call `initnet()`.
 
 ### Getting Started
 
 ```python
 import gnubg_nn
 
-# Load the engine (weights, bear-off tables, etc. are initialized)
-gnubg_nn.initnet()
+# Convert a 14-char Base64 Position ID to a 2x25 board
+board = gnubg_nn.board_from_position_id("4HPwATDgc/ABMA")
 
-# Convert a position key (20-char A–Z or 14-char Base64) to a board
-board = gnubg_nn.boardfromkey("4HPwATDgc/ABMA")
+# Evaluate win/gammon/backgammon probabilities at 2 plies
+probs = gnubg_nn.probabilities(board, gnubg_nn.p_0plus1)
+win, win_gammon, win_bg, lose_gammon, lose_bg = probs
 
-# Evaluate win/gammon/backgammon probabilities and equity at 4 plies
-win, gamm, bg, equity = gnubg_nn.probabilities(board, 4)
+print(f"Win: {win:.3f}, Gammon: {win_gammon:.3f}, Backgammon: {win_bg:.3f}")
 
-print(f"Win: {win:.3f}, Gammon: {gamm:.3f}, Backgammon: {bg:.3f}, Equity: {equity:.3f}")
+# Find the best move for an opening 6-5 roll
+moves = gnubg_nn.moves(board, 6, 5)
+best = gnubg_nn.best_move(board, 6, 5)
+print(f"Best move key: {best}")
 ```
 
 That’s all you need to get up and running! For detailed API docs, advanced build options, and configuration, see the 
