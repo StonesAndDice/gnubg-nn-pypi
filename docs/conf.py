@@ -12,8 +12,8 @@ import pypandoc
 
 DIR = Path(__file__).parent
 
-project = 'gnubg'
-copyright = '2025, David Reay'
+project = 'gnubg-nn'
+copyright = '2026, David Reay'
 author = 'David Reay'
 release = '1.1.0'
 

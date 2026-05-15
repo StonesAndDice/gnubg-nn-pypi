@@ -3,8 +3,8 @@
    :align: center
    :width: 200px
 
-GNUBG Neural Networks
-=====================
+GNUBG Neural Networks (gnubg-nn)
+================================
 
 This package provides the **neural network evaluation library** from the GNU Backgammon project — not the full backgammon application (GUI, match play). Use it to evaluate positions and cube decisions in Python.
 
