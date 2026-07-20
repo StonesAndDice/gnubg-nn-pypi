@@ -56,6 +56,36 @@ best = gnubg_nn.best_move(board, 6, 5)
 print(f"Best move key: {best}")
 ```
 
+### Training the Neural Network
+
+You can also train the neural network weights against labeled position data using the `Trainer` class:
+
+```python
+import gnubg_nn
+
+# Create a trainer from a list of training positions
+# Each entry: 20-char position key + 5 space-separated probability values
+training_data = [
+    "ABCDEFGHIJ0123456789 0.5 0.1 0.05 0.1 0.05",  # position key + probs
+    "JIHGFEDCBA9876543210 0.6 0.15 0.08 0.08 0.04",
+]
+
+trainer = gnubg_nn.Trainer(training_data)
+
+# Check initial training errors (RMS + max error for 6 metrics)
+errors = trainer.errors()
+print(f"Initial error: {errors[2]:.4f}")
+
+# Train for one epoch at learning rate 0.01
+trainer.train(0.01)
+
+# Check errors after training
+errors = trainer.errors()
+print(f"After training: {errors[2]:.4f}")
+```
+
+The `Trainer` class supports options for training against the pruned net, ignoring backgammon components, and restricting to specific neural net inputs. See the API documentation for details.
+
 That’s all you need to get up and running! For detailed API docs, advanced build options, and configuration, see the 
 sections below or visit the full documentation on [ReadTheDocs](https://gnubg.readthedocs.io/en/latest/).
 
@@ -78,6 +108,7 @@ It provides:
 * **Legal-move enumeration** (`moves`) & **probabilistic evaluation** (`probabilities`)
 * **Monte-Carlo rollouts** (`rollout`, `cubeful_rollout`)
 * **Equity lookup** (`equities.value(xAway, oAway)`)
+* **Neural-net training** (`Trainer` class for tuning weights against labeled positions)
 * **Runtime engine tuning** via the `set` submodule
 
 ## 🧪 Platform Compatibility
@@ -111,6 +142,8 @@ Specifically, the following models were used:
 
 - **GPT-4o** (OpenAI ChatGPT)
 - **o4-mini-high** (OpenAI ChatGPT)
+- **Haiku 4.5** (Anthropic)
+- **Opus 4.8** (Anthropic)
 
 These models were used to assist with code generation, documentation drafting, and architectural guidance. All outputs were reviewed and curated by a human before inclusion.
 

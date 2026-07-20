@@ -68,6 +68,43 @@ def evaluate_cube_decision(
     p: Union[None, Tuple[float, float, float, float, float]] = None,
 ) -> Union[int, Tuple[int, int, int, float, float, float]]: ...
 
+# --- Training ---
+class Trainer:
+    def __init__(
+        self,
+        data: List[str],
+        ignoreBGs: int = 0,
+        pruneNet: int = 0,
+        tList: Union[None, List[int]] = None,
+    ) -> None:
+        """Initialize a Trainer from a list of training positions.
+
+        Args:
+            data: List of strings, each containing a 20-char position key
+                  followed by 5 space-separated floats (desired probabilities).
+            ignoreBGs: If nonzero, ignore backgammon components during training.
+            pruneNet: If nonzero, train the pruned net instead of the main net.
+            tList: Optional list of neural net input indices to restrict training to.
+        """
+        ...
+    def errors(self) -> Tuple[float, float, float, float, float, float]:
+        """Calculate training errors.
+
+        Returns:
+            (absEquityError, maxAbsEquityError, equityError, maxEquityError,
+             noBGerror, maxNoBGerror)
+        """
+        ...
+    def train(self, alpha: float, order: Union[None, List[int]] = None) -> None:
+        """Perform one training pass.
+
+        Args:
+            alpha: Learning rate.
+            order: Optional list of position indices for training order
+                   (for shuffling epochs).
+        """
+        ...
+
 # --- Submodules ---
 class set:
     @staticmethod

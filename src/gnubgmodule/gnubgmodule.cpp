@@ -523,6 +523,11 @@ static PyObject *py_boardfromid(PyObject *self, PyObject *args) {
     return NULL;
   }
 
+  if (strlen(pos_id) != 14) {
+    PyErr_SetString(PyExc_ValueError, "invalid position ID");
+    return NULL;
+  }
+
   int board[2][25] = {{0}};
   PositionFromID(board, pos_id);
 
@@ -1454,6 +1459,371 @@ static PyObject *py_evaluate_cube_decision(PyObject *self, PyObject *args,
   return PyLong_FromLong(info.actionDouble);
 }
 
+// =============================================================================
+// Trainer object for neural net training
+// =============================================================================
+
+struct DataPosition {
+  unsigned char auch[10];
+  float probs[5];
+};
+
+struct Trainer {
+  explicit Trainer(unsigned int n);
+  ~Trainer();
+  Trainer(const Trainer &) = delete;
+  Trainer &operator=(const Trainer &) = delete;
+
+  struct Errors {
+    Errors()
+        : equityError(0.0), maxEquityError(0.0), absEquityError(0.0),
+          maxAbsEquityError(0.0), noBGerror(0.0), maxNoBGerror(0.0) {}
+
+    void add_eq(double e) {
+      if (e > maxEquityError) {
+        maxEquityError = e;
+      }
+      equityError += e * e;
+    }
+
+    void add_aeq(double e) {
+      if (e > maxAbsEquityError) {
+        maxAbsEquityError = e;
+      }
+      absEquityError += e * e;
+    }
+
+    void add_mnbg(double e) {
+      if (e > maxNoBGerror) {
+        maxNoBGerror = e;
+      }
+      noBGerror += e * e;
+    }
+
+    void adjust(unsigned int n) {
+      equityError = sqrt(equityError / n);
+      absEquityError = sqrt(absEquityError / n);
+      noBGerror = sqrt(noBGerror / n);
+    }
+
+    double equityError;
+    double maxEquityError;
+    double absEquityError;
+    double maxAbsEquityError;
+    double noBGerror;
+    double maxNoBGerror;
+  };
+
+  void errors(Errors &e) const;
+  void train(double a, const int *order) const;
+
+  unsigned int nPositions;
+  DataPosition *positions;
+  bool ignoreBGs;
+  bool pruneNet;
+  int *tList;
+};
+
+Trainer::Trainer(unsigned int n)
+    : nPositions(n), positions(new DataPosition[nPositions]), ignoreBGs(false),
+      pruneNet(false), tList(0) {}
+
+Trainer::~Trainer() {
+  delete[] positions;
+  delete[] tList;
+}
+
+namespace {
+inline double eqAbsErr(const float *const p1, const float *const p2) {
+  return (2 * fabs(p1[0] - p2[0]) + fabs(p1[1] - p2[1]) + fabs(p1[2] - p2[2]) +
+          fabs(p1[3] - p2[3]) + fabs(p1[4] - p2[4]));
+}
+
+inline double noBGErr(const float *const p1, const float *const p2) {
+  return (2 * fabs(p1[0] - p2[0]) + fabs(p1[1] - p2[1]) + fabs(p1[3] - p2[3]));
+}
+
+inline double eqErr(const float *const p1, const float *const p2) {
+  return (2 * (p1[0] - p2[0]) + (p1[1] - p2[1]) + (p1[2] - p2[2]) +
+          (p1[3] - p2[3]) + (p1[4] - p2[4]));
+}
+}  // namespace
+
+void Trainer::errors(Errors &e) const {
+  int board[2][25];
+  float p[5];
+
+  for (unsigned int k = 0; k < nPositions; ++k) {
+    const DataPosition &t = positions[k];
+
+    PositionFromKey(board, const_cast<unsigned char *>(t.auch));
+
+    if (pruneNet) {
+      evalPrune(board, p);
+    } else {
+      EvaluatePositionFast(board, p);
+    }
+
+    e.add_eq(eqErr(p, t.probs));
+    e.add_aeq(eqAbsErr(p, t.probs));
+    e.add_mnbg(noBGErr(p, t.probs));
+  }
+
+  e.adjust(nPositions);
+}
+
+void Trainer::train(double a, const int *const order) const {
+  int board[2][25];
+
+  for (unsigned int k = 0; k < nPositions; ++k) {
+    const DataPosition &t = positions[order ? order[k] : k];
+
+    PositionFromKey(board, const_cast<unsigned char *>(t.auch));
+
+    if (ignoreBGs) {
+      float p[5] = {t.probs[0], t.probs[1], 0.0f, t.probs[3], 0.0f};
+      if (pruneNet) {
+        PruneTrainPosition(board, p, a);
+      } else {
+        TrainPosition(board, p, a, tList);
+      }
+    } else {
+      if (pruneNet) {
+        PruneTrainPosition(board, const_cast<float *>(t.probs), a);
+      } else {
+        TrainPosition(board, const_cast<float *>(t.probs), a, tList);
+      }
+    }
+  }
+}
+
+// Python wrapper types and methods
+struct TrainerObject {
+  PyObject_HEAD Trainer *trainer;
+};
+
+static void trainer_dealloc(TrainerObject *self) {
+  delete self->trainer;
+  Py_TYPE(self)->tp_free(reinterpret_cast<PyObject *>(self));
+}
+
+static PyObject *trainer_new(PyTypeObject *type, PyObject *args,
+                             PyObject *kwargs) {
+  TrainerObject *self =
+      reinterpret_cast<TrainerObject *>(type->tp_alloc(type, 0));
+  if (self != NULL) {
+    self->trainer = NULL;
+  }
+  return reinterpret_cast<PyObject *>(self);
+}
+
+static int trainer_init(PyObject *self, PyObject *args, PyObject *kwargs) {
+  TrainerObject *obj = reinterpret_cast<TrainerObject *>(self);
+  PyObject *data = NULL;
+  int ignore_bgs = 0;
+  int prune_net = 0;
+  PyObject *t_list = NULL;
+
+  static char *kwlist[] = {
+      const_cast<char *>("data"), const_cast<char *>("ignoreBGs"),
+      const_cast<char *>("pruneNet"), const_cast<char *>("tList"), NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|iiO", kwlist, &data,
+                                   &ignore_bgs, &prune_net, &t_list)) {
+    return -1;
+  }
+
+  if (PyUnicode_Check(data) || PyBytes_Check(data)) {
+    PyErr_SetString(PyExc_TypeError,
+                    "data must be a sequence of strings, not a string");
+    return -1;
+  }
+  if (!PySequence_Check(data)) {
+    PyErr_SetString(PyExc_TypeError, "data must be a sequence");
+    return -1;
+  }
+
+  Py_ssize_t nTrain = PySequence_Size(data);
+  Trainer *t = new Trainer(nTrain);
+
+  t->ignoreBGs = (ignore_bgs != 0);
+  t->pruneNet = (prune_net != 0);
+
+  if (t_list) {
+    if (!PySequence_Check(t_list)) {
+      PyErr_SetString(PyExc_TypeError, "tList must be a sequence");
+      delete t;
+      return -1;
+    }
+    PyObject *fast_tlist = PySequence_Fast(t_list, "tList must be a sequence");
+    if (!fast_tlist) {
+      delete t;
+      return -1;
+    }
+    Py_ssize_t s = PySequence_Fast_GET_SIZE(fast_tlist);
+    if (s > 0) {
+      t->tList = new int[s + 1];
+      for (Py_ssize_t k = 0; k < s; ++k) {
+        PyObject *item = PySequence_Fast_GET_ITEM(fast_tlist, k);
+        t->tList[k] = PyLong_AsLong(item);
+        if (PyErr_Occurred()) {
+          Py_DECREF(fast_tlist);
+          delete t;
+          return -1;
+        }
+      }
+      t->tList[s] = -1;
+    }
+    Py_DECREF(fast_tlist);
+  }
+
+  // Parse training data
+  PyObject *fast_data = PySequence_Fast(data, "data must be a sequence");
+  if (!fast_data) {
+    delete t;
+    return -1;
+  }
+
+  for (Py_ssize_t k = 0; k < nTrain; ++k) {
+    PyObject *item = PySequence_Fast_GET_ITEM(fast_data, k);
+    if (!PyUnicode_Check(item)) {
+      PyErr_SetString(PyExc_TypeError,
+                      "each data item must be a string (positionid + 5 probs)");
+      Py_DECREF(fast_data);
+      delete t;
+      return -1;
+    }
+
+    const char *l = PyUnicode_AsUTF8(item);
+    if (!l) {
+      Py_DECREF(fast_data);
+      delete t;
+      return -1;
+    }
+
+    if (strlen(l) < 20) {
+      PyErr_Format(PyExc_ValueError, "invalid position key (%s).", l);
+      Py_DECREF(fast_data);
+      delete t;
+      return -1;
+    }
+    for (int c = 0; c < 20; ++c) {
+      if (l[c] < 'A' || l[c] > 'P') {
+        PyErr_Format(PyExc_ValueError, "invalid position key (%s).", l);
+        Py_DECREF(fast_data);
+        delete t;
+        return -1;
+      }
+    }
+
+    DataPosition &p = t->positions[k];
+    memcpy(p.auch, auchFromString(l), sizeof(p.auch));
+
+    l += 20;
+    char *endp = NULL;
+    for (int j = 0; j < 5; ++j) {
+      p.probs[j] = strtof(l, &endp);
+      if (l == endp) {
+        PyErr_Format(PyExc_ValueError,
+                     "invalid probabilities in data item %ld.", k);
+        Py_DECREF(fast_data);
+        delete t;
+        return -1;
+      }
+      l = endp;
+    }
+  }
+  Py_DECREF(fast_data);
+
+  obj->trainer = t;
+  return 0;
+}
+
+static PyObject *trainer_errors(PyObject *self, PyObject *args) {
+  TrainerObject *obj = reinterpret_cast<TrainerObject *>(self);
+  if (!obj->trainer) {
+    PyErr_SetString(PyExc_RuntimeError, "Trainer not initialized");
+    return NULL;
+  }
+
+  Trainer::Errors e;
+  obj->trainer->errors(e);
+
+  return Py_BuildValue("dddddd", e.absEquityError, e.maxAbsEquityError,
+                       e.equityError, e.maxEquityError, e.noBGerror,
+                       e.maxNoBGerror);
+}
+
+static PyObject *trainer_train(PyObject *self, PyObject *args) {
+  TrainerObject *obj = reinterpret_cast<TrainerObject *>(self);
+  if (!obj->trainer) {
+    PyErr_SetString(PyExc_RuntimeError, "Trainer not initialized");
+    return NULL;
+  }
+
+  double alpha;
+  PyObject *porder = NULL;
+
+  if (!PyArg_ParseTuple(args, "d|O", &alpha, &porder)) {
+    return NULL;
+  }
+
+  int *order = NULL;
+  if (porder) {
+    if (!(PySequence_Check(porder) &&
+          PySequence_Size(porder) == (Py_ssize_t)obj->trainer->nPositions)) {
+      PyErr_SetString(PyExc_ValueError,
+                      "order must be a sequence of length equal to number of "
+                      "training positions");
+      return NULL;
+    }
+
+    order = new int[obj->trainer->nPositions];
+    for (unsigned int k = 0; k < obj->trainer->nPositions; ++k) {
+      PyObject *i = PySequence_Fast_GET_ITEM(porder, k);
+      order[k] = PyLong_AsLong(i);
+      if (PyErr_Occurred()) {
+        delete[] order;
+        return NULL;
+      }
+    }
+  }
+
+  obj->trainer->train(alpha, order);
+  delete[] order;
+
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+static PyMethodDef trainer_methods[] = {
+    {"errors", trainer_errors, METH_NOARGS,
+     "Calculate training errors. Returns (absEquityError, maxAbsEquityError, "
+     "equityError, maxEquityError, noBGerror, maxNoBGerror)."},
+    {"train", trainer_train, METH_VARARGS,
+     "train(alpha, order=None)\n"
+     "Perform one training pass at learning rate alpha, optionally in the "
+     "given order."},
+    {NULL, NULL, 0, NULL}};
+
+static PyType_Slot trainer_slots[] = {
+    {Py_tp_doc, const_cast<char *>("Neural network trainer object")},
+    {Py_tp_new, reinterpret_cast<void *>(trainer_new)},
+    {Py_tp_init, reinterpret_cast<void *>(trainer_init)},
+    {Py_tp_dealloc, reinterpret_cast<void *>(trainer_dealloc)},
+    {Py_tp_methods, trainer_methods},
+    {0, NULL}};
+
+static PyType_Spec trainer_spec = {
+    "gnubg_nn.Trainer",     // name
+    sizeof(TrainerObject),  // basicsize
+    0,                      // itemsize
+    Py_TPFLAGS_DEFAULT,     // flags
+    trainer_slots           // slots
+};
+
+static PyObject *Trainer_Type = NULL;
+
 static PyMethodDef GnubgMethods[] = {
     {"classify", py_classify, METH_VARARGS, "Classify a board position."},
     {"pub_best_move", py_pubbestmove, METH_VARARGS,
@@ -1608,6 +1978,22 @@ PyMODINIT_FUNC PyInit__gnubg_nn(void) {
   // Initialize the module
   PyObject *m = PyModule_Create(&gnubgmodule);
   if (m == NULL) {
+    return NULL;
+  }
+
+  // Create the Trainer type from spec (heap type for Python 3)
+  if (Trainer_Type == NULL) {
+    Trainer_Type = PyType_FromSpec(&trainer_spec);
+    if (Trainer_Type == NULL) {
+      Py_DECREF(m);
+      return NULL;
+    }
+  }
+
+  // Add Trainer class to module
+  if (PyModule_AddObject(m, "Trainer", Trainer_Type) < 0) {
+    Py_DECREF(Trainer_Type);
+    Py_DECREF(m);
     return NULL;
   }
 

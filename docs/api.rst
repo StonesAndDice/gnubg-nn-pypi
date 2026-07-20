@@ -4,7 +4,7 @@ API Reference
 
 This section documents the public Python API provided by the `gnubg-nn-pypi` package — the GNUBG **neural network evaluation library** (position analysis, cube decisions, rollouts), not the full GNU Backgammon application. It includes functions for evaluating positions, loading neural nets, and accessing internal neural net state.
 
-gnubg.bearoff_id_2_pos(id) -> Tuple[int, int, int, int, int, int]
+gnubg_nn.bearoff_id_2_pos(id) -> Tuple[int, int, int, int, int, int]
 -----------------------------------------------------------------
 
 .. function:: bearoff_id_2_pos(id)
@@ -24,10 +24,10 @@ gnubg.bearoff_id_2_pos(id) -> Tuple[int, int, int, int, int, int]
 
    .. code-block:: python
 
-      >>> gnubg.bearoff_id_2_pos(42)
+      >>> gnubg_nn.bearoff_id_2_pos(42)
       (0, 1, 0, 2, 3, 9)
 
-gnubg.bearoff_probabilities(id) -> Tuple[float, ...]
+gnubg_nn.bearoff_probabilities(id) -> Tuple[float, ...]
 ----------------------------------------------------
 
 .. function:: bearoff_probabilities(id)
@@ -47,12 +47,12 @@ gnubg.bearoff_probabilities(id) -> Tuple[float, ...]
 
    .. code-block:: python
 
-      >>> gnubg.bearoff_probabilities(42)
+      >>> gnubg_nn.bearoff_probabilities(42)
       (0.0, 0.0, 0.15, 0.33, 0.52)
 
    In this example, the probabilities of bearing off in 3, 4, and 5 moves are 15%, 33%, and 52%, respectively.
 
-gnubg.best_move(pos, dice1, dice2, n=0, s='O', b=False, r=False, list=False, reduced=False)
+gnubg_nn.best_move(pos, dice1, dice2, n=0, s='O', b=False, r=False, list=False, reduced=False)
 -------------------------------------------------------------------------------------------
 
 .. function:: best_move(pos, dice1, dice2, n=0, s='O', b=False, r=False, list=False, reduced=False)
@@ -90,10 +90,10 @@ gnubg.best_move(pos, dice1, dice2, n=0, s='O', b=False, r=False, list=False, red
 
    .. code-block:: python
 
-      >>> gnubg.best_move(pos, 2, 1)
+      >>> gnubg_nn.best_move(pos, 2, 1)
       [(6, 5), (13, 11)]
 
-      >>> gnubg.best_move(pos, 6, 6, n=2, b=True, r=True, list=True)
+      >>> gnubg_nn.best_move(pos, 6, 6, n=2, b=True, r=True, list=True)
       (
          [(6, 12), (8, 14), (13, 19), (1, 7)],
          'board string after move...',
@@ -106,7 +106,7 @@ gnubg.best_move(pos, dice1, dice2, n=0, s='O', b=False, r=False, list=False, red
 
    The full move list includes all reasonable alternatives with their evaluation probabilities and match scores.
 
-gnubg.board_from_position_id(pos_id) -> List[List[int]]
+gnubg_nn.board_from_position_id(pos_id) -> List[List[int]]
 --------------------------------------------------------
 
 .. function:: board_from_position_id(pos_id)
@@ -126,7 +126,7 @@ gnubg.board_from_position_id(pos_id) -> List[List[int]]
 
    .. code-block:: python
 
-      >>> gnubg.board_from_position_id("4HPwATDgc/ABMA")
+      >>> gnubg_nn.board_from_position_id("4HPwATDgc/ABMA")
       [
          [0, 0, 0, 2, 0, 0, ..., 5],  # X's checkers
          [0, 0, 0, 0, 3, 2, ..., 0]   # O's checkers
@@ -134,7 +134,7 @@ gnubg.board_from_position_id(pos_id) -> List[List[int]]
 
    This output represents the internal format used by GNUBG to evaluate and simulate moves on the board.
 
-gnubg.board_from_position_key(key) -> List[List[int]]
+gnubg_nn.board_from_position_key(key) -> List[List[int]]
 -----------------------------------------------------
 
 .. function:: board_from_position_key(key)
@@ -155,7 +155,7 @@ gnubg.board_from_position_key(key) -> List[List[int]]
 
    .. code-block:: python
 
-      >>> gnubg.board_from_position_key("X0uASbDgc/ABMA:MAAAABAAIAAA")
+      >>> gnubg_nn.board_from_position_key("X0uASbDgc/ABMA:MAAAABAAIAAA")
       [
          [0, 0, 0, 2, 0, 0, ..., 5],  # X's side
          [0, 0, 0, 0, 3, 2, ..., 0]   # O's side
@@ -201,13 +201,13 @@ These integer constants represent how a backgammon position is classified by GNU
 
 .. code-block:: python
 
-   cls = gnubg.classify_position(board)
-   if cls == gnubg.c_bearoff:
+   cls = gnubg_nn.classify_position(board)
+   if cls == gnubg_nn.c_bearoff:
        print("Bearoff phase")
-   elif cls == gnubg.c_contact:
+   elif cls == gnubg_nn.c_contact:
        print("Still in contact")
 
-gnubg.classify(board) -> int
+gnubg_nn.classify(board) -> int
 ----------------------------
 
 .. function:: classify(board)
@@ -218,12 +218,12 @@ gnubg.classify(board) -> int
    :type board: list[list[int]]
    :returns: An integer constant corresponding to one of:
 
-     - :data:`gnubg.c_contact`
-     - :data:`gnubg.c_race`
-     - :data:`gnubg.c_crashed`
-     - :data:`gnubg.c_bearoff`
-     - :data:`gnubg.c_over`
-     - :data:`gnubg.c_backcontain` (if compiled with support)
+     - :data:`gnubg_nn.c_contact`
+     - :data:`gnubg_nn.c_race`
+     - :data:`gnubg_nn.c_crashed`
+     - :data:`gnubg_nn.c_bearoff`
+     - :data:`gnubg_nn.c_over`
+     - :data:`gnubg_nn.c_backcontain` (if compiled with support)
 
    :raises ValueError: If the board input is not a valid 2x25 structure.
 
@@ -231,11 +231,11 @@ gnubg.classify(board) -> int
 
    .. code-block:: python
 
-      >>> cls = gnubg.classify(board)
-      >>> if cls == gnubg.c_race:
+      >>> cls = gnubg_nn.classify(board)
+      >>> if cls == gnubg_nn.c_race:
       ...     print("This is a race position.")
 
-gnubg.cubeful_rollout(pos, ngames=576, side='X', ply=0) -> Tuple[float, ...]
+gnubg_nn.cubeful_rollout(pos, ngames=576, side='X', ply=0) -> Tuple[float, ...]
 ----------------------------------------------------------------------------
 
 .. function:: cubeful_rollout(pos, ngames=576, side='X', ply=0)
@@ -276,7 +276,7 @@ gnubg.cubeful_rollout(pos, ngames=576, side='X', ply=0) -> Tuple[float, ...]
 
    .. code-block:: python
 
-      >>> gnubg.cubeful_rollout(board, ngames=1024, side='O', ply=1)
+      >>> gnubg_nn.cubeful_rollout(board, ngames=1024, side='O', ply=1)
       (0.49, 0.21, 0.02, 0.51, 0.18, 0.01, -0.081, -0.079, 0.0031, ..., 0.26)
 
    These results can be used to evaluate cube decisions, risk/reward, and overall strategy in match play or money games.
@@ -308,7 +308,7 @@ equities.value(x_away, o_away) -> float
 
    In this example, if X is 3-away and O is 2-away, X has a 63.8% chance of winning the match.
 
-gnubg.key_of_board(board) -> str
+gnubg_nn.key_of_board(board) -> str
 --------------------------------
 
 .. function:: key_of_board(board)
@@ -328,7 +328,7 @@ gnubg.key_of_board(board) -> str
 
    .. code-block:: python
 
-      >>> gnubg.key_of_board([
+      >>> gnubg_nn.key_of_board([
       ...   [0, 0, 0, 2, ..., 5],
       ...   [0, 0, 0, 0, ..., 0]
       ... ])
@@ -336,7 +336,7 @@ gnubg.key_of_board(board) -> str
 
    This output can be used with GNUBG's `board_from_position_key` to reconstruct the board from its key.
 
-gnubg.moves(board, die1, die2, verbose=False) -> Tuple[...]
+gnubg_nn.moves(board, die1, die2, verbose=False) -> Tuple[...]
 ------------------------------------------------------------
 
 .. function:: moves(board, die1, die2, verbose=False)
@@ -363,10 +363,10 @@ gnubg.moves(board, die1, die2, verbose=False) -> Tuple[...]
 
    .. code-block:: python
 
-      >>> gnubg.moves(board, 3, 1)
+      >>> gnubg_nn.moves(board, 3, 1)
       ('X1uASbDgc/ACMA:MAAAABAAIAAA', 'X2uASbDgc/ABMA:MAAAABAAIAAA', ...)
 
-      >>> gnubg.moves(board, 6, 4, verbose=True)
+      >>> gnubg_nn.moves(board, 6, 4, verbose=True)
       (
         ('X1uASbDgc/ABMA:MAAAABAAIAAA', [(13, 19), (8, 14)]),
         ('X2uASbDgc/ACMA:MAAAABAAIAAA', [(6, 12), (13, 19)]),
@@ -375,7 +375,7 @@ gnubg.moves(board, die1, die2, verbose=False) -> Tuple[...]
 
    This is the core legal move generator used internally by GNUBG before move filtering or evaluation.
 
-gnubg.one_checker_race(pips) -> Optional[Tuple[float, float]]
+gnubg_nn.one_checker_race(pips) -> Optional[Tuple[float, float]]
 ----------------------------------------------------------------
 
 .. function:: one_checker_race(pips)
@@ -394,7 +394,7 @@ gnubg.one_checker_race(pips) -> Optional[Tuple[float, float]]
 
    .. code-block:: python
 
-      >>> gnubg.one_checker_race(10)
+      >>> gnubg_nn.one_checker_race(10)
       (0.273, 0.065)
 
    This indicates a 27.3% chance of winning from a 10-pip position with the standard deviation of outcomes at ~0.065.
@@ -402,7 +402,7 @@ gnubg.one_checker_race(pips) -> Optional[Tuple[float, float]]
 Ply Evaluation Strategy Constants
 ---------------------------------
 
-These constants are used to identify evaluation modes or neural net paths selected during multi-ply rollout, pruning, or classification strategies in GNUBG.
+These constants are used to identify evaluation modes or neural net paths selected during multi-ply rollout, pruning, or classification strategies in gnubg_nn.
 
 .. data:: p_0plus1
 
@@ -438,11 +438,11 @@ These are typically returned internally by rollout routines or may be useful for
 
 .. code-block:: python
 
-   eval_type = gnubg.p_1srace
-   if rollout_result_type == gnubg.p_prune:
+   eval_type = gnubg_nn.p_1srace
+   if rollout_result_type == gnubg_nn.p_prune:
        print("Used pruned network evaluation")
 
-gnubg.position_id(board) -> str
+gnubg_nn.position_id(board) -> str
 -------------------------------
 
 .. function:: position_id(board)
@@ -461,7 +461,7 @@ gnubg.position_id(board) -> str
 
    .. code-block:: python
 
-      >>> gnubg.position_id([
+      >>> gnubg_nn.position_id([
       ...   [0, 0, 0, 2, ..., 5],
       ...   [0, 0, 0, 0, ..., 0]
       ... ])
@@ -469,7 +469,7 @@ gnubg.position_id(board) -> str
 
    This Position ID can be passed to GNUBG-compatible tools or used in analysis pipelines.
 
-gnubg.probabilities(board, ply, nr=1296) -> Tuple[float, float, float, float, float]
+gnubg_nn.probabilities(board, ply, nr=1296) -> Tuple[float, float, float, float, float]
 -------------------------------------------------------------------------------------
 
 .. function:: probabilities(board, ply, nr=1296)
@@ -479,13 +479,13 @@ gnubg.probabilities(board, ply, nr=1296) -> Tuple[float, float, float, float, fl
    :param board: A 2×25 list representing the backgammon board state for both players.
    :type board: list[list[int]]
    :param ply: Evaluation mode, must be one of:
-      - :data:`gnubg.p_osr`
-      - :data:`gnubg.p_bearoff`
-      - :data:`gnubg.p_prune`
-      - :data:`gnubg.p_1sbear`
-      - :data:`gnubg.p_race`
-      - :data:`gnubg.p_0plus1`
-      - :data:`gnubg.p_1srace`
+      - :data:`gnubg_nn.p_osr`
+      - :data:`gnubg_nn.p_bearoff`
+      - :data:`gnubg_nn.p_prune`
+      - :data:`gnubg_nn.p_1sbear`
+      - :data:`gnubg_nn.p_race`
+      - :data:`gnubg_nn.p_0plus1`
+      - :data:`gnubg_nn.p_1srace`
    :type ply: int
    :param nr: Number of rollouts (used for OSR race mode). Default is 1296.
    :type nr: int, optional
@@ -501,12 +501,12 @@ gnubg.probabilities(board, ply, nr=1296) -> Tuple[float, float, float, float, fl
 
    .. code-block:: python
 
-      >>> gnubg.probabilities(board, gnubg.p_prune)
+      >>> gnubg_nn.probabilities(board, gnubg_nn.p_prune)
       (0.637, 0.182, 0.042, 0.103, 0.036)
 
    These outputs help guide move selection, cube decisions, or match strategy depending on the game's phase.
 
-gnubg.pub_best_move(board, die1, die2) -> List[int]
+gnubg_nn.pub_best_move(board, die1, die2) -> List[int]
 ---------------------------------------------------
 
 .. function:: pub_best_move(board, die1, die2)
@@ -530,12 +530,12 @@ gnubg.pub_best_move(board, die1, die2) -> List[int]
 
    .. code-block:: python
 
-      >>> gnubg.pub_best_move(board, 6, 1)
+      >>> gnubg_nn.pub_best_move(board, 6, 1)
       [13, 19, 8, 9]
 
    This represents two moves: checker from 13→19 and from 8→9.
 
-gnubg.pub_eval_score(board) -> float
+gnubg_nn.pub_eval_score(board) -> float
 ------------------------------------
 
 .. function:: pub_eval_score(board)
@@ -554,7 +554,7 @@ gnubg.pub_eval_score(board) -> float
 
    .. code-block:: python
 
-      >>> gnubg.pub_eval_score(board)
+      >>> gnubg_nn.pub_eval_score(board)
       -0.172
 
    This indicates that player O is slightly favored in the current position.
@@ -584,11 +584,11 @@ These constants define how GNUBG classifies or initiates rollout evaluations for
 
 .. code-block:: python
 
-   rollout_type = gnubg.ro_auto
-   if rollout_type == gnubg.ro_race:
+   rollout_type = gnubg_nn.ro_auto
+   if rollout_type == gnubg_nn.ro_race:
        print("Running race-specific rollout")
 
-gnubg.roll() -> Tuple[int, int]
+gnubg_nn.roll() -> Tuple[int, int]
 -------------------------------
 
 .. function:: roll()
@@ -603,13 +603,13 @@ gnubg.roll() -> Tuple[int, int]
 
    .. code-block:: python
 
-      >>> gnubg.roll()
+      >>> gnubg_nn.roll()
       (3, 5)
 
-gnubg.rollout(pos, ngames=1296, n=0, level=gnubg.ro_auto, nt=500, std=False) -> Union[Tuple[float, ...], Tuple[Tuple[float, ...], Tuple[float, ...]]]
+gnubg_nn.rollout(pos, ngames=1296, n=0, level=gnubg_nn.ro_auto, nt=500, std=False) -> Union[Tuple[float, ...], Tuple[Tuple[float, ...], Tuple[float, ...]]]
 ------------------------------------------------------------------------------------------------------------------------------------------------------
 
-.. function:: rollout(pos, ngames=1296, n=0, level=gnubg.ro_auto, nt=500, std=False)
+.. function:: rollout(pos, ngames=1296, n=0, level=gnubg_nn.ro_auto, nt=500, std=False)
 
    Performs a cubeless rollout simulation of a backgammon position using GNUBG’s AnalyzeBoard logic.
 
@@ -622,10 +622,10 @@ gnubg.rollout(pos, ngames=1296, n=0, level=gnubg.ro_auto, nt=500, std=False) -> 
    :param n: Number of plies to evaluate at (0, 1, or 2).
    :type n: int
    :param level: Rollout type. Must be one of:
-      - :data:`gnubg.ro_auto`
-      - :data:`gnubg.ro_race`
-      - :data:`gnubg.ro_bearoff`
-      - :data:`gnubg.ro_over`
+      - :data:`gnubg_nn.ro_auto`
+      - :data:`gnubg_nn.ro_race`
+      - :data:`gnubg_nn.ro_bearoff`
+      - :data:`gnubg_nn.ro_over`
    :type level: int
    :param nt: Truncation threshold (default 500 games).
    :type nt: int
@@ -642,20 +642,20 @@ gnubg.rollout(pos, ngames=1296, n=0, level=gnubg.ro_auto, nt=500, std=False) -> 
 
    .. code-block:: python
 
-      >>> gnubg.rollout(board)
+      >>> gnubg_nn.rollout(board)
       (0.44, 0.21, 0.01, 0.31, 0.03)
 
-      >>> gnubg.rollout(board, std=True)
+      >>> gnubg_nn.rollout(board, std=True)
       ((0.44, 0.21, 0.01, 0.31, 0.03), (0.03, 0.02, 0.01, 0.02, 0.01))
 
    This function provides accurate statistical approximations of long-term game outcomes from a given position.
 
-gnubg.set
+gnubg_nn.set
 ---------
 
 The `set` submodule provides configuration methods for adjusting internal GNUBG simulation behavior and evaluation settings.
 
-.. module:: gnubg.set
+.. module:: gnubg_nn.set
    :synopsis: Low-level controls for simulation setup.
 
 Available Methods
@@ -720,11 +720,158 @@ Available Methods
 
 .. code-block:: python
 
-   import gnubg.set as gset
+   import gnubg_nn.set as gset
 
    gset.seed(42)
    gset.score(3, 2)
    gset.cube('O', 2, False)
+
+gnubg_nn.Trainer
+---------------
+
+The `Trainer` class provides neural-network training capabilities, allowing you to adjust the GNUBG neural-net weights against labeled position data.
+
+.. class:: Trainer(data, ignoreBGs=0, pruneNet=0, tList=None)
+
+   Create a trainer object for tuning GNUBG neural-network weights.
+
+   :param data: A list of training samples. Each sample is a string containing:
+      - A 20-character position key (from :func:`key_of_board`)
+      - Five space-separated float values: ``win gammon backgammon lose_gammon lose_backgammon``
+   :type data: list[str]
+   :param ignoreBGs: If 1, ignore backgammon win/loss components during training. Default is 0.
+   :type ignoreBGs: int
+   :param pruneNet: If 1, train the pruned (faster) neural net instead of the main net. Default is 0.
+   :type pruneNet: int
+   :param tList: Optional list of neural-net input indices to restrict training to. If provided, only these inputs will be trained.
+   :type tList: list[int] or None
+
+   **Example**
+
+   .. code-block:: python
+
+      import gnubg_nn
+
+      # Get a position key from a board
+      board = gnubg_nn.board_from_position_id("4HPwATDgc/ABMA")
+      key = gnubg_nn.key_of_board(board)
+
+      # Create training data
+      training_data = [
+          f"{key} 0.5 0.1 0.05 0.1 0.05",
+          f"{key} 0.6 0.15 0.08 0.08 0.04",
+      ]
+
+      # Construct trainer
+      trainer = gnubg_nn.Trainer(training_data)
+
+      # Check initial errors
+      errors = trainer.errors()
+      print(f"Initial RMS error: {errors[2]:.4f}")
+
+      # Train for one epoch
+      trainer.train(0.01)  # learning rate 0.01
+
+      # Check errors after training
+      errors = trainer.errors()
+      print(f"After training: {errors[2]:.4f}")
+
+Methods
+^^^^^^^
+
+.. method:: Trainer.errors() -> Tuple[float, float, float, float, float, float]
+
+   Calculate training errors by running the network on all stored positions and comparing against the target probabilities.
+
+   :returns: A 6-tuple of floats: ``(absEquityError, maxAbsEquityError, equityError, maxEquityError, noBGerror, maxNoBGerror)``
+
+      - **absEquityError**: RMS absolute error (ignoring sign)
+      - **maxAbsEquityError**: Maximum absolute error
+      - **equityError**: RMS signed error (weighted: 2×win + gammon + backgammon + lose_gammon + lose_backgammon)
+      - **maxEquityError**: Maximum signed error
+      - **noBGerror**: RMS error ignoring backgammon components
+      - **maxNoBGerror**: Max error ignoring backgammon components
+
+   **Example**
+
+   .. code-block:: python
+
+      errors = trainer.errors()
+      print(f"RMS error: {errors[2]:.4f}, Max error: {errors[3]:.4f}")
+
+.. method:: Trainer.train(alpha, order=None) -> None
+
+   Perform one training pass, adjusting network weights to reduce errors.
+
+   :param alpha: Learning rate (step size for weight updates). Typical range: 0.001–0.1.
+   :type alpha: float
+   :param order: Optional list of position indices specifying the training order. If provided, must have the same length as the training data.
+                 This allows shuffling positions between epochs.
+   :type order: list[int] or None
+
+   **Example**
+
+   .. code-block:: python
+
+      # Train at learning rate 0.01
+      trainer.train(0.01)
+
+      # Train with custom position order (useful for stochastic descent)
+      import random
+      n = len(training_data)
+      for epoch in range(10):
+          order = list(range(n))
+          random.shuffle(order)
+          trainer.train(0.01, order)
+          errors = trainer.errors()
+          print(f"Epoch {epoch}: error = {errors[2]:.4f}")
+
+Neural-Network Training Guide
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Training the GNUBG neural network requires:
+
+1. **Labeled position data**: Positions (as position keys) with known or desired probability outputs.
+2. **Learning rate selection**: Start with 0.01–0.001 and adjust based on convergence.
+3. **Epoch iteration**: Call `train()` multiple times in a loop for repeated passes over the data.
+4. **Monitoring**: Use `errors()` to track learning progress.
+
+**Full Training Example**
+
+.. code-block:: python
+
+   import gnubg_nn
+
+   # Prepare training data from position IDs or keys
+   training_data = [
+       # position_key + target_probs (win, gammon, backgammon, lose_gammon, lose_backgammon)
+       "AAAAAAAAAA0123456789 0.50 0.10 0.05 0.10 0.05",
+       "JIHGFEDCBA9876543210 0.60 0.15 0.08 0.08 0.04",
+   ]
+
+   trainer = gnubg_nn.Trainer(training_data)
+
+   # Train for 100 epochs
+   for epoch in range(100):
+       trainer.train(0.01)
+       errors = trainer.errors()
+       if epoch % 10 == 0:
+           print(f"Epoch {epoch:3d}: RMS error = {errors[2]:.4f}")
+
+Options
+^^^^^^^
+
+**ignoreBGs (int, default 0)**
+
+If set to 1, backgammon win and loss components are zeroed out during error calculation and training. Useful when training on matches where backgammons are impossible or not of interest.
+
+**pruneNet (int, default 0)**
+
+If set to 1, training updates the pruned (abbreviated) neural net instead of the full net. The pruned net is used during rollout pruning for speed; training it separately can improve rollout efficiency.
+
+**tList (list[int], default None)**
+
+If provided, restrict training to only the specified neural-net input indices. This allows fine-tuning specific subsets of inputs without affecting others.
 
 Engine Initialisation
 ---------------------
@@ -735,7 +882,7 @@ The GNUBG neural-network engine (weights, bearoff tables, opening book) is initi
 
    import gnubg_nn  # engine ready immediately
 
-If you encounter examples from the original ``pygnubg`` library that call ``initnet()`` or ``gnubg.initnet()``, those calls are not needed and will raise ``AttributeError`` — simply remove them.
+If you encounter examples from the original ``pygnubg`` library that call ``initnet()`` or ``gnubg_nn.initnet()``, those calls are not needed and will raise ``AttributeError`` — simply remove them.
 
 Migration from pygnubg / Legacy Names
 --------------------------------------

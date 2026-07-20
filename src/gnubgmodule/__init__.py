@@ -9,6 +9,13 @@ if os.name == "nt" and hasattr(os, "add_dll_directory"):
 # Import your compiled extension module
 from ._gnubg_nn import *
 
+# Make __version__ available as a module with all version attributes
+# (don't overwrite the submodule reference with a string)
+try:
+    from . import __version__ as _version_module
+except (ImportError, AttributeError):
+    pass
+
 # Deprecated aliases for backwards compatibility with pygnubg
 boardfromkey = board_from_position_key
 boardfromid = board_from_position_id
@@ -52,6 +59,8 @@ __all__ = [
     "full_version",
     "short_version",
     "git_revision",
+    # Training
+    "Trainer",
     # Submodules
     "set",
     # Position type constants
