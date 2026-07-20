@@ -27,25 +27,25 @@ runs:
           zlib1g-dev
 
     - name: Install Meson
-      if: ${{ inputs.os == 'ubuntu-latest' || inputs.os == 'macos-13' || inputs.os == 'macos-14' }}
+      if: ${{ inputs.os != 'windows-latest' }}
       shell: bash
       run: pip install meson ninja cibuildwheel
 
     - name: Build with meson
-      if: ${{ inputs.os == 'ubuntu-latest' || inputs.os == 'macos-13' || inputs.os == 'macos-14' }}
+      if: ${{ inputs.os != 'windows-latest' }}
       shell: bash
       run: |
         meson setup build
         meson compile -C build
 
     - name: Build wheels
-      if: ${{ inputs.os == 'ubuntu-latest' || inputs.os == 'macos-13' || inputs.os == 'macos-14' }}
+      if: ${{ inputs.os != 'windows-latest' }}
       shell: bash
       env:
         CIBW_SKIP: "*-win32"
         CIBW_BUILD: "${{ inputs.python }}-*"
         CIBW_ARCHS_MACOS: "native"
-        CIBW_PLATFORM: ${{ inputs.os == 'ubuntu-latest' && 'linux' || (inputs.os == 'macos-13' && 'macos') || (inputs.os == 'macos-14' && 'macos') || (inputs.os == 'windows-latest' && 'windows') }}
+        CIBW_PLATFORM: ${{ inputs.os == 'ubuntu-latest' && 'linux' || 'macos' }}
         CIBW_TEST_REQUIRES: "pytest"
         CIBW_TEST_COMMAND: "pytest {project}/tests"
       run: cibuildwheel --output-dir wheelhouse

@@ -1,7 +1,7 @@
 <h1 align="center">
 <img src="https://raw.githubusercontent.com/StonesAndDice/gnubg-nn-pypi/refs/heads/main/img/banner.png">
 
-GNUBG Neural Networks
+GNUBG Neural Networks (gnubg-nn)
 </h1>
 
 [![PyPI Downloads](https://img.shields.io/pypi/dm/gnubg-nn.svg?label=PyPI%20downloads)](https://pypi.org/project/gnubg-nn/)
