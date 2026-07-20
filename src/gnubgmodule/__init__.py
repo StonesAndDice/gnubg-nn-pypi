@@ -6,6 +6,11 @@ if os.name == "nt" and hasattr(os, "add_dll_directory"):
     if pkgdir.is_dir():
         os.add_dll_directory(str(pkgdir))
 
+try:
+    from .__version__ import __version__
+except ImportError:
+    __version__ = "unknown"
+
 # Import your compiled extension module
 from ._gnubg_nn import *
 
@@ -49,6 +54,7 @@ __all__ = [
     "errorrating",
     "parsemove",
     "movetupletostring",
+    "__version__",
     "full_version",
     "short_version",
     "git_revision",
