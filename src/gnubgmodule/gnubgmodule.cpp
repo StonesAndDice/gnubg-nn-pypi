@@ -1772,9 +1772,9 @@ static PyMethodDef trainer_methods[] = {
 
 static PyType_Slot trainer_slots[] = {
     {Py_tp_doc, const_cast<char *>("Neural network trainer object")},
-    {Py_tp_new, trainer_new},
-    {Py_tp_init, trainer_init},
-    {Py_tp_dealloc, trainer_dealloc},
+    {Py_tp_new, reinterpret_cast<void *>(trainer_new)},
+    {Py_tp_init, reinterpret_cast<void *>(trainer_init)},
+    {Py_tp_dealloc, reinterpret_cast<void *>(trainer_dealloc)},
     {Py_tp_methods, trainer_methods},
     {0, NULL}};
 
