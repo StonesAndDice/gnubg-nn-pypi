@@ -47,7 +47,7 @@ class TestPrintBoardScript:
         stdout, stderr, code = self.run_print_board(self.OPENING_POSITION_ID)
         assert code == 0
         # Opening position should have specific pieces
-        assert "Point  1:" in stdout  # X has 2 on point 1
+        assert "Point 24:" in stdout  # X and O both have 2 on their 24-point
         assert "Point  6:" in stdout  # Both have 5 on point 6
         assert "checkers" in stdout
 
@@ -224,8 +224,8 @@ class TestExamplesIntegration:
         # Both examples should use the same conversion
         assert len(board) == 2
         assert all(len(row) == 25 for row in board)
-        # Known opening position: X has 2 on point 1 (index 0)
-        assert board[0][0] == 2
+        # Known opening position: X has 2 on the 24-point (index 23)
+        assert board[0][23] == 2
 
     def test_board_structure_matches_documentation(self):
         """Verify board structure matches the 2x25 documentation."""
