@@ -1645,39 +1645,55 @@ static int trainer_init(PyObject *self, PyObject *args, PyObject *kwargs) {
       delete t;
       return -1;
     }
-    Py_ssize_t s = PySequence_Size(t_list);
+    PyObject *fast_tlist = PySequence_Fast(t_list, "tList must be a sequence");
+    if (!fast_tlist) {
+      delete t;
+      return -1;
+    }
+    Py_ssize_t s = PySequence_Fast_GET_SIZE(fast_tlist);
     if (s > 0) {
       t->tList = new int[s + 1];
       for (Py_ssize_t k = 0; k < s; ++k) {
-        PyObject *item = PySequence_Fast_GET_ITEM(t_list, k);
+        PyObject *item = PySequence_Fast_GET_ITEM(fast_tlist, k);
         t->tList[k] = PyLong_AsLong(item);
         if (PyErr_Occurred()) {
+          Py_DECREF(fast_tlist);
           delete t;
           return -1;
         }
       }
       t->tList[s] = -1;
     }
+    Py_DECREF(fast_tlist);
   }
 
   // Parse training data
+  PyObject *fast_data = PySequence_Fast(data, "data must be a sequence");
+  if (!fast_data) {
+    delete t;
+    return -1;
+  }
+
   for (Py_ssize_t k = 0; k < nTrain; ++k) {
-    PyObject *item = PySequence_Fast_GET_ITEM(data, k);
+    PyObject *item = PySequence_Fast_GET_ITEM(fast_data, k);
     if (!PyUnicode_Check(item)) {
       PyErr_SetString(PyExc_TypeError,
                       "each data item must be a string (positionid + 5 probs)");
+      Py_DECREF(fast_data);
       delete t;
       return -1;
     }
 
     const char *l = PyUnicode_AsUTF8(item);
     if (!l) {
+      Py_DECREF(fast_data);
       delete t;
       return -1;
     }
 
     if (strlen(l) < 20) {
       PyErr_Format(PyExc_ValueError, "invalid position key (%s).", l);
+      Py_DECREF(fast_data);
       delete t;
       return -1;
     }
@@ -1692,12 +1708,14 @@ static int trainer_init(PyObject *self, PyObject *args, PyObject *kwargs) {
       if (l == endp && j == 0) {
         PyErr_Format(PyExc_ValueError,
                      "invalid probabilities in data item %ld.", k);
+        Py_DECREF(fast_data);
         delete t;
         return -1;
       }
       l = endp;
     }
   }
+  Py_DECREF(fast_data);
 
   obj->trainer = t;
   return 0;
