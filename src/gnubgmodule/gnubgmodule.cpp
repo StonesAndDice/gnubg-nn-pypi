@@ -384,7 +384,8 @@ static bool stringToBoard(const char *key, int board[2][25]) {
     return true;
   } else if (len == 14) {
     // interpret as PositionID
-    return PositionFromID(board, key) == 0;
+    PositionFromID(board, key);
+    return true;
   }
   // otherwise invalid
   return false;
@@ -522,11 +523,13 @@ static PyObject *py_boardfromid(PyObject *self, PyObject *args) {
     return NULL;
   }
 
-  int board[2][25] = {{0}};
-  if (PositionFromID(board, pos_id) < 0) {
+  if (strlen(pos_id) != 14) {
     PyErr_SetString(PyExc_ValueError, "invalid position ID");
     return NULL;
   }
+
+  int board[2][25] = {{0}};
+  PositionFromID(board, pos_id);
 
   PyObject *outer = PyList_New(2);
   for (int s = 0; s < 2; ++s) {
