@@ -384,8 +384,7 @@ static bool stringToBoard(const char *key, int board[2][25]) {
     return true;
   } else if (len == 14) {
     // interpret as PositionID
-    PositionFromID(board, key);
-    return true;
+    return PositionFromID(board, key) == 0;
   }
   // otherwise invalid
   return false;
@@ -524,7 +523,10 @@ static PyObject *py_boardfromid(PyObject *self, PyObject *args) {
   }
 
   int board[2][25] = {{0}};
-  PositionFromID(board, pos_id);
+  if (PositionFromID(board, pos_id) < 0) {
+    PyErr_SetString(PyExc_ValueError, "invalid position ID");
+    return NULL;
+  }
 
   PyObject *outer = PyList_New(2);
   for (int s = 0; s < 2; ++s) {
@@ -1628,6 +1630,11 @@ static int trainer_init(PyObject *self, PyObject *args, PyObject *kwargs) {
     return -1;
   }
 
+  if (PyUnicode_Check(data) || PyBytes_Check(data)) {
+    PyErr_SetString(PyExc_TypeError,
+                    "data must be a sequence of strings, not a string");
+    return -1;
+  }
   if (!PySequence_Check(data)) {
     PyErr_SetString(PyExc_TypeError, "data must be a sequence");
     return -1;
@@ -1697,6 +1704,14 @@ static int trainer_init(PyObject *self, PyObject *args, PyObject *kwargs) {
       delete t;
       return -1;
     }
+    for (int c = 0; c < 20; ++c) {
+      if (l[c] < 'A' || l[c] > 'P') {
+        PyErr_Format(PyExc_ValueError, "invalid position key (%s).", l);
+        Py_DECREF(fast_data);
+        delete t;
+        return -1;
+      }
+    }
 
     DataPosition &p = t->positions[k];
     memcpy(p.auch, auchFromString(l), sizeof(p.auch));
@@ -1705,7 +1720,7 @@ static int trainer_init(PyObject *self, PyObject *args, PyObject *kwargs) {
     char *endp = NULL;
     for (int j = 0; j < 5; ++j) {
       p.probs[j] = strtof(l, &endp);
-      if (l == endp && j == 0) {
+      if (l == endp) {
         PyErr_Format(PyExc_ValueError,
                      "invalid probabilities in data item %ld.", k);
         Py_DECREF(fast_data);
