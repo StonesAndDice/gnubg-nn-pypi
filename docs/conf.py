@@ -12,8 +12,8 @@ import pypandoc
 
 DIR = Path(__file__).parent
 
-project = 'gnubg'
-copyright = '2025, David Reay'
+project = 'gnubg-nn'
+copyright = '2026, Stones And Dice'
 author = 'David Reay'
 release = '1.1.0'
 
@@ -38,7 +38,7 @@ html_static_path = ['_static']
 breathe_projects = {
     "gnubg": "./doxygen/xml"
 }
-breathe_default_project = "gnubg"
+breathe_default_project = "gnubg-nn"
 
 
 # def prepare(app):

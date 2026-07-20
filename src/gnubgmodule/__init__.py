@@ -6,13 +6,15 @@ if os.name == "nt" and hasattr(os, "add_dll_directory"):
     if pkgdir.is_dir():
         os.add_dll_directory(str(pkgdir))
 
-try:
-    from .__version__ import __version__
-except ImportError:
-    __version__ = "unknown"
-
 # Import your compiled extension module
 from ._gnubg_nn import *
+
+# Make __version__ available as both a string and a module
+try:
+    from . import __version__ as _version_module
+    __version__ = _version_module.__version__
+except (ImportError, AttributeError):
+    __version__ = "unknown"
 
 # Deprecated aliases for backwards compatibility with pygnubg
 boardfromkey = board_from_position_key
@@ -54,10 +56,11 @@ __all__ = [
     "errorrating",
     "parsemove",
     "movetupletostring",
-    "__version__",
     "full_version",
     "short_version",
     "git_revision",
+    # Training
+    "Trainer",
     # Submodules
     "set",
     # Position type constants
