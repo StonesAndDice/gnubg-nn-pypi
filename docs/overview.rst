@@ -1,7 +1,7 @@
 Overview
 ========
 
-**`gnubg-nn-pypi`** is a Python package that provides bindings to the **GNUBG neural network evaluation library** — the same engine used by the full `GNU Backgammon <https://www.gnu.org/software/gnubg/>`_ application for position analysis and cube decisions, but as a standalone library. This package is the neural network library only; it is not the full backgammon application (GUI, match play). It allows developers and researchers to evaluate backgammon positions using the same logic and weights that power one of the strongest backgammon AIs in existence.
+**`gnubg-nn`** is a Python package that provides bindings to the **GNUBG neural network evaluation library** — the same engine used by the full `GNU Backgammon <https://www.gnu.org/software/gnubg/>`_ application for position analysis and cube decisions, but as a standalone library. This package is the neural network library only; it is not the full backgammon application (GUI, match play). It allows developers and researchers to evaluate backgammon positions using the same logic and weights that power one of the strongest backgammon AIs in existence.
 
 This package is ideal for:
 
