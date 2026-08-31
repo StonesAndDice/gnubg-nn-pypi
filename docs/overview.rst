@@ -14,9 +14,19 @@ Features
 --------
 
 - Evaluate positions using GNUBG-trained neural networks
-- Load and use official GNUBG weights
+- Load and use official GNUBG weights -- including holding several nets
+  in one process at once (``net_load``/``net_use``/``net_save``)
 - Generate GNUBG-style 250-feature input vectors from Position IDs
 - Access low-level evaluation scores: win/gammon/backgammon probabilities
+- Cube decisions (``evaluate_cube_decision``) and one-checker races
+  (``one_checker_race``)
+- Train neural-net weights against labeled position data (``Trainer``)
+- A full self-play training pipeline (``gnubg_nn.training``): self-play
+  a net against a fixed reference net, mine the positions where they
+  disagree, train on the disagreements, and score against real rollout
+  benchmark files -- plus tools to download GNU Backgammon's own
+  published reference net, benchmarks, and training data. See
+  :doc:`training`.
 - Python 3 bindings to the native GNUBG neural network library
 
 Why this library?

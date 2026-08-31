@@ -16,6 +16,31 @@ It is base64-encoded and typically 14 characters long. The GNUBG neural network 
 
 You can convert between Position IDs and board state programmatically using this package's helper tools.
 
+Position Key
+------------
+
+A **Position Key** is a *different* encoding of the same board state --
+20 characters, using only the letters ``A`` through ``P`` (16 letters,
+so each letter is one 4-bit nibble; 20 x 4 = the 80-bit position key,
+the same underlying bits a Position ID encodes, just in a different
+text representation). Returned by :func:`key_of_board`, consumed by
+:func:`board_from_position_key`, :func:`evaluate_cube_decision`, and
+throughout :mod:`gnubg_nn.training`'s rollout benchmark and
+training-data file format.
+
+**Position ID and Position Key are not interchangeable** -- passing one
+where the other is expected either raises an error or silently parses
+garbage, depending on which function you call. This distinction
+mattered enough during this package's own `training` subpackage
+development that it caused real bugs before being sorted out -- when in
+doubt, check which one a function's docs in :doc:`api` actually asks for.
+
+A third, related-but-different string shows up in some GNUBG tooling and
+match logs: a combined ``PositionID:MatchID`` format (Position ID, a
+colon, then a Match ID -- see below). This is neither a Position ID nor
+a Position Key on its own; none of this package's functions accept it
+directly.
+
 Match ID
 --------
 
