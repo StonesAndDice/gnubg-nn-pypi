@@ -64,6 +64,7 @@ __all__ = [
     # Multi-net handles
     "net_load",
     "net_use",
+    "net_save",
     # Submodules
     "set",
     # Position type constants

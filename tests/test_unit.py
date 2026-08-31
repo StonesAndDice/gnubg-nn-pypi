@@ -114,6 +114,39 @@ class TestGnubgBindings(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             nn.net_load("/nonexistent/path/gnubg.weights")
 
+    def test_net_use_survives_handle_going_out_of_scope(self):
+        # Regression test for a real use-after-free this exposed during
+        # development: net_use() must keep its own strong reference to
+        # whichever handle it makes active, since the caller's own
+        # reference (here, the `handle` local below) can be garbage
+        # collected the moment this function returns to its caller --
+        # without net_use() holding on, the capsule's destructor frees
+        # the C-level net while it's still the globally active one, and
+        # the NEXT evaluation call segfaults (not this one -- that's
+        # what made it easy to miss: it only crashed a few calls later,
+        # classic use-after-free timing, confirmed by finding it broke
+        # test_unit.py tests that ran strictly after unrelated net_use()
+        # calls elsewhere in the suite).
+        import gc
+        from pathlib import Path
+
+        weights_path = str(Path(nn.__file__).parent / "data" / "gnubg.weights")
+
+        def make_and_activate():
+            handle = nn.net_load(weights_path)
+            nn.net_use(handle)
+            # No reference to `handle` survives this function returning.
+
+        make_and_activate()
+        gc.collect()  # force collection now rather than waiting on it
+
+        board = nn.board_from_position_id(self.board_id)
+        # If the fix regresses, this is the call that segfaults -- a
+        # crash here kills the whole test process, not just this test,
+        # so there's no assertion to make beyond "this didn't crash".
+        result = nn.probabilities(board, 0)
+        self.assertEqual(len(result), 5)
+
     # Optional: trainer object test (uncomment if stable)
     # def test_trainer(self):
     #     t = nn.trainer({"pos": self.board, "n": 0})

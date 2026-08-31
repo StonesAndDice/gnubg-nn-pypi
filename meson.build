@@ -39,6 +39,21 @@ install_data(
     install_dir: join_paths(pkgdir, 'gnubg_nn')
 )
 
+# Install the gnubg_nn.training subpackage (self-play/mine/train tools --
+# see src/gnubgmodule/training/__init__.py). A plain Python package, no
+# compiled sources of its own, so this is the same install_data() pattern
+# as __init__.py/bindings.pyi above, just one directory level deeper.
+install_data(
+    'src/gnubgmodule/training/__init__.py',
+    'src/gnubgmodule/training/_util.py',
+    'src/gnubgmodule/training/buildnet.py',
+    'src/gnubgmodule/training/cli.py',
+    'src/gnubgmodule/training/download.py',
+    'src/gnubgmodule/training/referr.py',
+    'src/gnubgmodule/training/train.py',
+    install_dir: join_paths(pkgdir, pkg_name, 'training')
+)
+
 install_data(
     'src/gnubgmodule/data/gnubg.weights',
     'src/gnubgmodule/data/gnubg_ts0.bd',

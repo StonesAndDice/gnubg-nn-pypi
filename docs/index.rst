@@ -15,4 +15,5 @@
    rules
    concepts
    api
+   training
    references

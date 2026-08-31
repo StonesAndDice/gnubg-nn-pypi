@@ -375,6 +375,60 @@ gnubg_nn.moves(board, die1, die2, verbose=False) -> Tuple[...]
 
    This is the core legal move generator used internally by GNUBG before move filtering or evaluation.
 
+gnubg_nn.net_load(path, cache_size=-1) -> NetHandle
+-----------------------------------------------------
+
+.. function:: net_load(path, cache_size=-1)
+
+   Loads a gnubg-format weights file into a new, independent net handle. Does not affect the currently active net -- call :func:`net_use` to make it active. Lets one process hold several nets at once (e.g. a trainee net and a fixed reference net for :mod:`gnubg_nn.training`), matching ``pygnubg``'s own ``gnubg.net.get()``.
+
+   :param path: Path to a gnubg-format weights file.
+   :type path: str
+   :param cache_size: Internal evaluation cache size for this net. ``-1`` (default) uses the engine's own default.
+   :type cache_size: int
+   :returns: An opaque handle, valid until every Python reference to it is dropped.
+   :raises RuntimeError: If the file can't be loaded.
+
+   **Example**
+
+   .. code-block:: python
+
+      >>> handle = gnubg_nn.net_load("my-net.weights")
+      >>> gnubg_nn.net_use(handle)
+
+gnubg_nn.net_use(handle) -> None
+-----------------------------------
+
+.. function:: net_use(handle)
+
+   Makes a :func:`net_load` handle the active net for subsequent calls (``probabilities``, ``best_move``, ``moves``, ``evaluate_cube_decision``, etc.).
+
+   :param handle: A handle from :func:`net_load`.
+   :raises TypeError: If ``handle`` isn't a valid :func:`net_load` handle.
+
+   .. warning::
+
+      Keep a Python reference to a handle for as long as you need it active. Once every reference is dropped, its memory is freed -- if you'd made it active and no longer hold a reference, the engine is left pointing at freed memory. This only matters if you deliberately discard a handle you're still using; normal usage (keeping a variable around while you need it) doesn't run into it.
+
+gnubg_nn.net_save(path, cache_size=-1) -> None
+-------------------------------------------------
+
+.. function:: net_save(path, cache_size=-1)
+
+   Saves the *currently active* net (see :func:`net_use`) to a gnubg-format weights file. Takes no handle argument -- to save a specific handle, call :func:`net_use` on it immediately beforehand.
+
+   :param path: Destination path.
+   :type path: str
+   :param cache_size: Passed straight through to the underlying save call; ``-1`` (default) is the engine's own default.
+   :raises RuntimeError: If the file can't be written.
+
+   **Example**
+
+   .. code-block:: python
+
+      >>> gnubg_nn.net_use(handle)
+      >>> gnubg_nn.net_save("trained-net.weights")
+
 gnubg_nn.one_checker_race(pips) -> Optional[Tuple[float, float]]
 ----------------------------------------------------------------
 

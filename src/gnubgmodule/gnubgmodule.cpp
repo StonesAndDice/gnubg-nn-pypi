@@ -599,6 +599,19 @@ static PyObject *py_net_load(PyObject *self, PyObject *args) {
   return PyCapsule_New(net, kNetCapsuleName, py_net_capsule_destructor);
 }
 
+// Holds a strong reference to whichever net_load() capsule is currently
+// active, so it can't be garbage-collected while it's still in use.
+// Without this, a caller doing `gnubg_nn.net_use(gnubg_nn.net_load(path))`
+// -- or simply letting a handle variable go out of scope after making it
+// active -- drops the capsule's only Python reference, its destructor
+// runs DestroyNets() on memory setNets() is still pointing the engine at,
+// and the next evaluation call is a use-after-free (confirmed empirically:
+// a segfault a few tests after net_use(), not immediately, matching
+// classic use-after-free timing). Mirrors pygnubg's own py/pynets.cc,
+// which keeps the exact same kind of reference (its `static NetObject*
+// current`) for the exact same reason.
+static PyObject *current_net_capsule = NULL;
+
 static PyObject *py_net_use(PyObject *self, PyObject *args) {
   PyObject *capsule;
   if (!PyArg_ParseTuple(args, "O", &capsule))
@@ -613,7 +626,33 @@ static PyObject *py_net_use(PyObject *self, PyObject *args) {
       static_cast<EvalNets_ *>(PyCapsule_GetPointer(capsule, kNetCapsuleName));
   setNets(net);
 
+  Py_INCREF(capsule);
+  Py_XDECREF(current_net_capsule);
+  current_net_capsule = capsule;
+
   Py_RETURN_NONE;
+}
+
+// net_save(): saves the CURRENTLY ACTIVE net (whatever net_use()/the
+// default import-time net last set) -- EvalSave() itself takes no net
+// argument, it always writes whatever eval.c's global active net
+// pointer currently references, so this mirrors that exactly rather
+// than inventing a per-handle save that the underlying C function
+// doesn't support. To save a specific handle, call net_use(handle)
+// immediately before net_save().
+static PyObject *py_net_save(PyObject *self, PyObject *args) {
+  const char *path;
+  int cacheSize = -1;
+  if (!PyArg_ParseTuple(args, "s|i", &path, &cacheSize))
+    return NULL;
+
+  if (EvalSave(path, cacheSize) != 0) {
+    PyErr_SetString(PyExc_RuntimeError, "failed to save net");
+    return NULL;
+  }
+
+  Py_INCREF(Py_None);
+  return Py_None;
 }
 
 static PyObject *py_classify(PyObject *self, PyObject *args) {
@@ -1888,6 +1927,10 @@ static PyMethodDef GnubgMethods[] = {
      "net_use(handle) -> None\n"
      "Make a net_load() handle the active net for subsequent calls "
      "(probabilities, best_move, moves, evaluate_cube_decision, etc.)."},
+    {"net_save", py_net_save, METH_VARARGS,
+     "net_save(path, cache_size=-1) -> None\n"
+     "Save the currently active net (see net_use()) to a gnubg-format "
+     "weights file."},
     {"classify", py_classify, METH_VARARGS, "Classify a board position."},
     {"pub_best_move", py_pubbestmove, METH_VARARGS,
      "Get best move using public evaluation."},
