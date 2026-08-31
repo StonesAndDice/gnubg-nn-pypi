@@ -1,8 +1,8 @@
-<h1 align="center">
+<p align="center">
 <img src="https://raw.githubusercontent.com/StonesAndDice/gnubg-nn-pypi/refs/heads/main/img/banner.png">
+</p>
 
-GNUBG Neural Networks (gnubg-nn)
-</h1>
+# GNUBG Neural Networks (gnubg-nn)
 
 [![PyPI Downloads](https://img.shields.io/pypi/dm/gnubg-nn.svg?label=PyPI%20downloads)](https://pypi.org/project/gnubg-nn/)
 [![Build & test wheels](https://github.com/StonesAndDice/gnubg-nn-pypi/actions/workflows/build_and_test.yml/badge.svg?branch=main)](https://github.com/StonesAndDice/gnubg-nn-pypi/actions/workflows/build_and_test.yml)
@@ -10,7 +10,7 @@ GNUBG Neural Networks (gnubg-nn)
 [![Branch naming](https://github.com/StonesAndDice/gnubg-nn-pypi/actions/workflows/branch.yaml/badge.svg?branch=main)](https://github.com/StonesAndDice/gnubg-nn-pypi/actions/workflows/branch.yaml)
 [![Release to PyPI](https://github.com/StonesAndDice/gnubg-nn-pypi/actions/workflows/release.yml/badge.svg)](https://github.com/StonesAndDice/gnubg-nn-pypi/actions/workflows/release.yml)
 [![GitHub issues](https://img.shields.io/github/issues/StonesAndDice/gnubg-nn-pypi.svg)](https://github.com/StonesAndDice/gnubg-nn-pypi/issues)
-[![License](https://img.shields.io/badge/license-GPL%20v2-blue.svg)](#license)
+[![License](https://img.shields.io/badge/license-GPL%20v2-blue.svg)](https://github.com/StonesAndDice/gnubg-nn-pypi/blob/main/LICENSE)
 [![Stack Overflow](https://img.shields.io/badge/stackoverflow-Ask%20questions-blue.svg)](https://stackoverflow.com/questions/tagged/gnubg)
 
 **GNUBG Neural Networks** (this package, `gnubg-nn`) is a *library* that provides Python bindings to the GNUBG neural-network evaluation engine — the same engine used for position analysis and cube decisions in the full [GNU Backgammon](https://www.gnu.org/software/gnubg/) application, but packaged as a standalone library for use in scripts, analysis tools, and applications. It is not the full backgammon game (GUI, match play, etc.).

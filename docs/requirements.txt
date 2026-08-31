@@ -3,4 +3,3 @@ sphinx-rtd-theme
 myst-parser
 breathe
 graphviz
-pypandoc

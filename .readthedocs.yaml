@@ -10,7 +10,6 @@ build:
   apt_packages:
     - doxygen
     - graphviz
-    - pandoc
   tools:
     python: "3.13"
 
