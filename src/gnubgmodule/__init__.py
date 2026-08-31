@@ -46,19 +46,8 @@ __all__ = [
     "bearoff_probabilities",
     # Equity / match
     "equities",
-    # Utility / version
+    # Utility
     "roll",
-    "eq2mwc",
-    "mwc2eq",
-    "eq2mwc_stderr",
-    "mwc2eq_stderr",
-    "luckrating",
-    "errorrating",
-    "parsemove",
-    "movetupletostring",
-    "full_version",
-    "short_version",
-    "git_revision",
     # Training
     "Trainer",
     # Multi-net handles

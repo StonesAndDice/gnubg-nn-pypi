@@ -1,4 +1,27 @@
-## [Unreleased] - 1.1.0a7
+## [Unreleased]
+### Added
+- `net_load()`/`net_use()`/`net_save()`: hold and switch between multiple
+  loaded nets in one process (e.g. a trainee net and a fixed reference
+  net), matching `pygnubg`'s own `gnubg.net.get()`/`set()`/`save()`.
+- `gnubg_nn.training` subpackage: self-play + disagreement-mining against
+  a fixed reference net, training, scoring against real rollout
+  benchmark files, and downloading GNU Backgammon's published reference
+  net/benchmarks/training data -- Python 3 ports of the original
+  `gnubg-nn` project's `scripts/train/*.py` (Python 2, `pygnubg`-only)
+  tools. Two new console scripts: `gnubg-nn-buildnet`, `gnubg-nn-download`.
+- `docs/training.rst` walking through the above.
+
+### Fixed
+- `__all__` no longer references 11 names that were never implemented or
+  exported (`eq2mwc`, `mwc2eq`, `eq2mwc_stderr`, `mwc2eq_stderr`,
+  `luckrating`, `errorrating`, `parsemove`, `movetupletostring`,
+  `full_version`, `short_version`, `git_revision`) -- `from gnubg_nn
+  import *` no longer raises. The version-related three remain reachable
+  via `gnubg_nn.__version__.full_version` etc.; the other eight were
+  never implemented anywhere and the 1.1.0a7 entry below claiming they'd
+  been exposed was incorrect.
+
+## [1.1.0a7]
 ### Changed
 - Fix README Quick Start: corrects function names (`board_from_position_id`, `best_move`, `moves`) and import (`import gnubg_nn`)
 - Add prominent package-name warning in README: `gnubg-nn` not `gnubg`
@@ -6,7 +29,7 @@
 - Add Migration / Legacy Names section to API docs mapping old `pygnubg` names to new names
 - Add Package Name warning section to API docs
 - Add deprecated aliases `boardfromkey`, `boardfromid`, `bestmove` for backwards compatibility
-- Expose additional utility functions in `__all__`: `eq2mwc`, `mwc2eq`, `eq2mwc_stderr`, `mwc2eq_stderr`, `luckrating`, `errorrating`, `parsemove`, `movetupletostring`, `full_version`, `short_version`, `git_revision`
+- ~~Expose additional utility functions in `__all__`: `eq2mwc`, `mwc2eq`, `eq2mwc_stderr`, `mwc2eq_stderr`, `luckrating`, `errorrating`, `parsemove`, `movetupletostring`, `full_version`, `short_version`, `git_revision`~~ (never actually implemented -- reverted, see Unreleased above)
 
 ## [1.1.0a6] - 2026-04-30
 ### Changed
