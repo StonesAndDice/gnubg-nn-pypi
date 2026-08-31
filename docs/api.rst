@@ -139,15 +139,19 @@ gnubg_nn.board_from_position_key(key) -> List[List[int]]
 
 .. function:: board_from_position_key(key)
 
-   Converts a GNUBG board key string (e.g. from a move list or match log) into a 2x25 matrix representing both players' checkers.
+   Converts a GNUBG **position key** string -- the 20-character, letters-A-P-only
+   format returned by :func:`key_of_board` and used throughout
+   :mod:`gnubg_nn.training`'s rollout benchmark/training-data files -- into a
+   2x25 matrix representing both players' checkers. This is a *different*
+   string format from the 14-character Base64 **Position ID**
+   :func:`board_from_position_id` takes -- the two are not interchangeable;
+   see :doc:`concepts` for the distinction.
 
-   :param key: A GNUBG position key string (e.g., "X0uASbDgc/ABMA:MAAAABAAIAAA").
+   :param key: A 20-character GNUBG position key string, e.g. ``"OAHDPAABDAOAHDPAABDA"``.
    :type key: str
-   :returns: A nested list ``[2][25]`` representing the board for the X and O sides.
-
-   Each sublist contains:
-   - Index 1–24: points on the board
-   - Index 0: special off/bar/checker area (GNUBG convention)
+   :returns: A tuple of two 25-element tuples (not a list -- unlike
+             :func:`board_from_position_id`, which returns nested lists),
+             representing the board for the X and O sides.
 
    :raises ValueError: If the position key is invalid or not parseable.
 
@@ -155,13 +159,11 @@ gnubg_nn.board_from_position_key(key) -> List[List[int]]
 
    .. code-block:: python
 
-      >>> gnubg_nn.board_from_position_key("X0uASbDgc/ABMA:MAAAABAAIAAA")
-      [
-         [0, 0, 0, 2, 0, 0, ..., 5],  # X's side
-         [0, 0, 0, 0, 3, 2, ..., 0]   # O's side
-      ]
+      >>> gnubg_nn.board_from_position_key("OAHDPAABDAOAHDPAABDA")
+      ((0, 0, 0, 0, 0, 5, 0, 3, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0),
+       (0, 0, 0, 0, 0, 5, 0, 3, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0))
 
-   This is a lower-level equivalent of `board_from_position_id`, used when working with full match position keys.
+   This is a lower-level equivalent of `board_from_position_id`, used when working with position keys rather than Position IDs.
 
 Position Class Constants
 ------------------------
@@ -308,6 +310,62 @@ equities.value(x_away, o_away) -> float
 
    In this example, if X is 3-away and O is 2-away, X has a 63.8% chance of winning the match.
 
+gnubg_nn.evaluate_cube_decision(pos, n=0, v=-1, s='X', i=0, p=None)
+--------------------------------------------------------------------
+
+.. function:: evaluate_cube_decision(pos, n=0, v=-1, s='X', i=0, p=None)
+
+   Evaluates whether to double, take/pass, or play on for a position, given
+   the current match score (see :func:`set.score`).
+
+   .. warning::
+
+      Requires a real match score set via ``gnubg_nn.set.score(usAway,
+      opAway)`` first -- calling this at the default (0, 0) money-play
+      score raises ``RuntimeError: Not implemented for money`` (confirmed).
+      Use a symmetric score like ``(7, 7)`` as a money-equivalent stand-in
+      if you don't have a real match score to evaluate against.
+
+   :param pos: A position -- either a 20-character position key string (see
+       :func:`key_of_board`) or a 26-element ``AnalyzeBoard`` list. Not the
+       2x25 ``Board`` shape :func:`classify`/:func:`best_move` use.
+   :param n: Evaluation ply.
+   :param v: Reserved/internal; leave at the default ``-1``.
+   :param s: Side, ``'X'`` or ``'O'``.
+   :param i: ``0`` (default): return just the cube action as a single int.
+       ``1``: verbose mode, return the 6-tuple described below.
+   :param p: Optional probability 5-tuple (``win, win_gammon,
+       win_backgammon, lose_gammon, lose_backgammon``) to evaluate the
+       decision *as if* the position had these probabilities, instead of
+       asking the active net -- this is how :mod:`gnubg_nn.training`
+       compares a net's own opinion against a rollout-labeled target.
+   :type pos: str
+   :type n: int
+   :type s: str
+   :type i: int
+   :type p: Optional[Tuple[float, float, float, float, float]]
+
+   :returns: With ``i=0`` (default), a single ``int`` cube-action code.
+       With ``i=1``, a 6-tuple ``(double, take, too_good,
+       no_double_equity, double_take_equity, double_pass_equity)`` --
+       ``double``/``take``/``too_good`` are ``0``/``1`` flags for the
+       recommended action; the last three are match-equity values, only
+       one of which is "the" equity for this decision (whichever the
+       ``double``/``take`` flags select).
+
+   **Example**
+
+   .. code-block:: python
+
+      >>> board = gnubg_nn.board_from_position_id("4HPwATDgc/ABMA")
+      >>> key = gnubg_nn.key_of_board(board)
+      >>> gnubg_nn.set.score(7, 7)
+      >>> gnubg_nn.evaluate_cube_decision(key)
+      0
+      >>> gnubg_nn.evaluate_cube_decision(key, i=1)
+      (0, 1, 0, 0.505649983882904, 0.48715001344680786, 0.5579999685287476)
+      >>> gnubg_nn.set.score(0, 0)  # reset to money play when done
+
 gnubg_nn.key_of_board(board) -> str
 --------------------------------
 
@@ -317,7 +375,11 @@ gnubg_nn.key_of_board(board) -> str
 
    :param board: A 2×25 nested list representing the full game state for both players.
    :type board: list[list[int]]
-   :returns: A 20-character GNUBG position key string (uppercase A–Z).
+   :returns: A 20-character GNUBG position key string, letters ``A``-``P``
+             only (each letter encodes one 4-bit nibble; 20 letters x 4
+             bits = the 80-bit position key) -- not the full alphabet, and
+             not the same format as a 14-character Position ID (see
+             :doc:`concepts`).
 
    This function performs the reverse of :func:`board_from_position_key`. The key string encodes the board state for fast comparison,
    storage, and referencing in GNUBG tools and formats (like match logs and move records).
@@ -328,13 +390,11 @@ gnubg_nn.key_of_board(board) -> str
 
    .. code-block:: python
 
-      >>> gnubg_nn.key_of_board([
-      ...   [0, 0, 0, 2, ..., 5],
-      ...   [0, 0, 0, 0, ..., 0]
-      ... ])
-      'X0uASbDgc/ABMA:MAAAABAAIAAA'
+      >>> board = gnubg_nn.board_from_position_id("4HPwATDgc/ABMA")
+      >>> gnubg_nn.key_of_board(board)
+      'OAHDPAABDAOAHDPAABDA'
 
-   This output can be used with GNUBG's `board_from_position_key` to reconstruct the board from its key.
+   This output can be used with :func:`board_from_position_key` to reconstruct the board from its key.
 
 gnubg_nn.moves(board, die1, die2, verbose=False) -> Tuple[...]
 ------------------------------------------------------------
@@ -349,13 +409,15 @@ gnubg_nn.moves(board, die1, die2, verbose=False) -> Tuple[...]
    :type die1: int
    :param die2: Second die roll (1–6).
    :type die2: int
-   :param verbose: If True, returns each move as a tuple of position key and move steps. If False, returns just the position keys.
+   :param verbose: If True, returns each move as a tuple of position key and move steps. If False, returns just the position keys. **Positional only** -- this function takes no keyword arguments (confirmed: calling ``moves(board, d1, d2, verbose=True)`` raises ``TypeError: moves() takes no keyword arguments``); pass it positionally.
    :type verbose: bool
 
-   :returns: A tuple of legal move options. The format depends on `verbose`:
-      - If `verbose=False` (default): ``(key1, key2, ...)``
-        where each key is a 20-character GNUBG position key string.
-      - If `verbose=True`: ``((key1, [(from, to), ...]), ...)``
+   :returns: A tuple of legal move options. The format depends on ``verbose``:
+
+      - If ``verbose=False`` (default): ``(key1, key2, ...)``
+        where each key is a 20-character GNUBG position key string (see
+        :func:`key_of_board`).
+      - If ``verbose=True``: ``((key1, ((from, to), ...)), ...)``
 
    :raises ValueError: If the board or dice are invalid.
 
@@ -363,13 +425,14 @@ gnubg_nn.moves(board, die1, die2, verbose=False) -> Tuple[...]
 
    .. code-block:: python
 
+      >>> board = gnubg_nn.board_from_position_id("4HPwATDgc/ABMA")
       >>> gnubg_nn.moves(board, 3, 1)
-      ('X1uASbDgc/ACMA:MAAAABAAIAAA', 'X2uASbDgc/ABMA:MAAAABAAIAAA', ...)
+      ('OAHDPAABDAOAHDPAABBC', 'OAHDPAABDAOAHDPAABCB', 'OAHDPAABDAOAGLPAABCC', ...)
 
-      >>> gnubg_nn.moves(board, 6, 4, verbose=True)
+      >>> gnubg_nn.moves(board, 6, 4, True)  # verbose positional, not verbose=True
       (
-        ('X1uASbDgc/ABMA:MAAAABAAIAAA', [(13, 19), (8, 14)]),
-        ('X2uASbDgc/ACMA:MAAAABAAIAAA', [(6, 12), (13, 19)]),
+        ('OAHDPAABDAOAHDPAEBAC', ((24, 18), (24, 20))),
+        ('OAHDPAABDAOAHDPAAFCA', ((24, 18), (18, 14))),
         ...
       )
 
@@ -736,49 +799,71 @@ Available Methods
    :param enabled: True to enable, False to disable.
    :type enabled: bool
 
-.. function:: set.ps(flags)
+.. function:: set.ps(nPlies, nMoves, nAdditional, threshold)
 
-   Set pruning/move filtering flags.
+   Set pruning/move-filter parameters for a given ply.
 
-   :param flags: Integer bitmask for move filters.
-   :type flags: int
+   :param nPlies: Which ply this filter applies to.
+   :param nMoves: Number of moves to keep at that ply.
+   :param nAdditional: Number of additional moves to keep if they're within ``threshold`` of the best.
+   :param threshold: Equity threshold for the additional-moves cutoff.
+   :type nPlies: int
+   :type nMoves: int
+   :type nAdditional: int
+   :type threshold: float
 
-.. function:: set.equities(table_id)
+.. function:: set.equities(which)
+.. function:: set.equities(win_weight, gammon_weight)
+   :no-index:
 
-   Select the match equity table to use.
+   Select the match equity table to use -- **two different call shapes**,
+   not one signature with a default: pass either a single table-name
+   string (``'gnur'``, ``'jacobs'``, ``'woolsey'``, ``'snowie'``, ...),
+   or two separate positional floats. Passing an actual 2-tuple object
+   (``set.equities((0.7, 0.85))``) raises ``TypeError`` -- confirmed.
 
-   :param table_id: An integer referring to a preloaded MET.
-   :type table_id: int
+   :param which: A match-equity table name.
+   :type which: str
+   :param win_weight: Weight for the win-equity term (only when passing two floats).
+   :type win_weight: float
+   :param gammon_weight: Weight for the gammon-equity term (only when passing two floats).
+   :type gammon_weight: float
 
-.. function:: set.score(x_away, o_away)
+.. function:: set.score(usAway, opAway, crawford=0)
 
-   Set the current match score for X and O.
+   Set the current match score.
 
-   :param x_away: Points X needs to win the match (0–25).
-   :param o_away: Points O needs to win the match.
-   :type x_away: int
-   :type o_away: int
+   :param usAway: Points the player on roll needs to win the match.
+   :param opAway: Points the opponent needs to win the match.
+   :param crawford: ``1`` if this is the Crawford game, else ``0`` (default).
+   :type usAway: int
+   :type opAway: int
+   :type crawford: int
 
-.. function:: set.cube(owner, value, centered)
+.. function:: set.cube(cube, owner=b"")
 
    Set the cube state for evaluation.
 
-   :param owner: `'X'`, `'O'`, or `'C'` (centered).
-   :param value: Cube value (1, 2, 4, ...).
-   :param centered: Boolean indicating if the cube is centered.
-   :type owner: str
-   :type value: int
-   :type centered: bool
+   :param cube: Cube value (1, 2, 4, ...) -- ``1`` also implies centered (no separate centered flag exists).
+   :param owner: A single-byte ``bytes`` object, e.g. ``b'X'`` or ``b'O'`` -- **not a** ``str``; passing a plain string raises ``TypeError`` (confirmed). Omit for centered.
+   :type cube: int
+   :type owner: bytes
 
 **Example**
 
 .. code-block:: python
 
-   import gnubg_nn.set as gset
+   import gnubg_nn
+
+   # NOT `import gnubg_nn.set as gset` -- `set` is an attribute of the
+   # gnubg_nn package (populated at import time), not a submodule
+   # Python's import machinery can find on its own; confirmed
+   # `import gnubg_nn.set` raises ModuleNotFoundError.
+   gset = gnubg_nn.set
 
    gset.seed(42)
    gset.score(3, 2)
-   gset.cube('O', 2, False)
+   gset.cube(2, b'O')
 
 gnubg_nn.Trainer
 ---------------
@@ -973,6 +1058,23 @@ The ``gnubg-nn`` package modernises function names relative to the original ``py
      -
 
 Deprecated aliases (``boardfromkey``, ``boardfromid``, ``bestmove``) are available in ``gnubg_nn`` for backwards compatibility but will be removed in a future release.
+
+Version Information
+--------------------
+
+.. code-block:: python
+
+   >>> import gnubg_nn
+   >>> gnubg_nn.__version__.full_version
+   '1.1.0a11'
+   >>> gnubg_nn.__version__.short_version
+   '1.1.0a11'
+   >>> gnubg_nn.__version__.git_revision
+   'd365ba9b9dcf5e4df4f00e8f88e90115533e4456'
+
+``gnubg_nn.__version__`` is a submodule (generated at build time), not a
+plain string -- there is no ``gnubg_nn.full_version``/``short_version``/
+``git_revision`` at the top level.
 
 Package Name
 ------------

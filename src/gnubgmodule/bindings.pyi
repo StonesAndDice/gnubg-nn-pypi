@@ -1,4 +1,4 @@
-from typing import Any, List, Tuple, Union
+from typing import Any, List, Tuple, Union, overload
 
 # --- Core Types ---
 Board = List[List[int]]  # 2x25
@@ -56,8 +56,12 @@ def bearoff_probabilities(
     id_or_pips: Union[int, Tuple[int, int, int, int, int, int]],
 ) -> Tuple[float, ...]: ...
 def moves(
-    board: Board, die1: int, die2: int, verbose: int = 0
-) -> Union[List[str], List[Tuple[str, MoveList]]]: ...
+    board: Board, die1: int, die2: int, verbose: int = 0, /
+) -> Union[Tuple[str, ...], Tuple[Tuple[str, MoveList], ...]]:
+    """Positional-only -- moves(board, d1, d2, verbose=True) raises
+    TypeError (confirmed: this function takes no keyword arguments).
+    Returns tuples, not lists, at every level."""
+    ...
 def probabilities(
     board: Board, nPlies: int, nr: int = 1296
 ) -> Tuple[float, float, float, float, float]: ...
@@ -133,11 +137,24 @@ class set:
     @staticmethod
     def ps(nPlies: int, nMoves: int, nAdditional: int, threshold: float) -> None: ...
     @staticmethod
-    def equities(which_or_weights: Union[str, Tuple[float, float]]) -> None: ...
+    @overload
+    def equities(which: str) -> None:
+        """A match-equity table name, e.g. set.equities('gnur')."""
+        ...
+    @staticmethod
+    @overload
+    def equities(win_weight: float, gammon_weight: float) -> None:
+        """Two separate positional floats, e.g. set.equities(0.7, 0.85)
+        -- NOT a 2-tuple object; set.equities((0.7, 0.85)) raises
+        TypeError (confirmed)."""
+        ...
     @staticmethod
     def score(usAway: int, opAway: int, crawford: int = 0) -> None: ...
     @staticmethod
-    def cube(cube: int, owner: str = "") -> None: ...
+    def cube(cube: int, owner: bytes = b"") -> None:
+        """owner is a single-byte bytes object (e.g. b'X'), not a str --
+        cube(2, 'X') raises TypeError (confirmed)."""
+        ...
 
 class equities:
     @staticmethod
