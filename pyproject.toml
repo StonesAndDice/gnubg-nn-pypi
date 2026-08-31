@@ -24,7 +24,7 @@ gnubg-nn-download = "gnubg_nn.training.download:_main"
 [project.urls]
 Homepage = "https://www.gnu.org/software/gnubg/"
 Documentation = "http://www.gnubg.org/documentation/doku.php?id=gnu_backgammon_faq"
-Source = "https://github.com/gnubg/gnubg-nn-pypi"
+Source = "https://github.com/StonesAndDice/gnubg-nn-pypi"
 GNUBG = "https://git.savannah.gnu.org/cgit/gnubg/gnubg-nn.git"
 MailingList = "https://lists.gnu.org/mailman/listinfo/gnubg"
 Credits = "https://git.savannah.gnu.org/cgit/gnubg.git/tree/credits.sh"
