@@ -52,8 +52,8 @@ print(f"Win: {win:.3f}, Gammon: {win_gammon:.3f}, Backgammon: {win_bg:.3f}")
 
 # Find the best move for an opening 6-5 roll
 moves = gnubg_nn.moves(board, 6, 5)
-best = gnubg_nn.best_move(board, 6, 5)
-print(f"Best move key: {best}")
+best = gnubg_nn.best_move(board, 6, 5)  # default args: a move list, [(from, to), ...]
+print(f"Best move: {best}")
 ```
 
 ### Training the Neural Network
@@ -64,10 +64,12 @@ You can also train the neural network weights against labeled position data usin
 import gnubg_nn
 
 # Create a trainer from a list of training positions
-# Each entry: 20-char position key + 5 space-separated probability values
+# Each entry: 20-char position key (letters A-P only) + 5 space-separated
+# probability values -- get real keys from key_of_board()/moves(), not
+# hand-typed strings.
 training_data = [
-    "ABCDEFGHIJ0123456789 0.5 0.1 0.05 0.1 0.05",  # position key + probs
-    "JIHGFEDCBA9876543210 0.6 0.15 0.08 0.08 0.04",
+    "OAHDPAABDAOAHDPAABDA 0.5 0.1 0.05 0.1 0.05",  # position key + probs
+    "OAHDPAABDAOAHDPAABBC 0.6 0.15 0.08 0.08 0.04",
 ]
 
 trainer = gnubg_nn.Trainer(training_data)
@@ -85,6 +87,18 @@ print(f"After training: {errors[2]:.4f}")
 ```
 
 The `Trainer` class supports options for training against the pruned net, ignoring backgammon components, and restricting to specific neural net inputs. See the API documentation for details.
+
+### Self-Play Training
+
+The `gnubg_nn.training` subpackage builds on `Trainer` (above) and `net_load`/`net_use` (multiple nets held in one process) to provide a full self-play training pipeline: play a net against a fixed reference net, mine the positions where they disagree, and train on the disagreements — plus tools to download GNU Backgammon's own published reference net, rollout benchmarks, and training data, and to score a net against real rollout ground truth. Installing this package also installs two console scripts, `gnubg-nn-download` and `gnubg-nn-buildnet`:
+
+```bash
+gnubg-nn-download ./gnubg-data
+gnubg-nn-buildnet my-net.weights ./gnubg-data/nngnubg.weights \
+    ./training-data.dat ./gnubg-data/contact.bm --class contact --cycles 20
+```
+
+See the "Training" page on [ReadTheDocs](https://gnubg.readthedocs.io/en/latest/training.html) (source: [`docs/training.rst`](https://github.com/StonesAndDice/gnubg-nn-pypi/blob/main/docs/training.rst)) for the full walkthrough.
 
 That’s all you need to get up and running! For detailed API docs, advanced build options, and configuration, see the 
 sections below or visit the full documentation on [ReadTheDocs](https://gnubg.readthedocs.io/en/latest/).
@@ -104,35 +118,40 @@ It provides:
 * **Position classification** (`classify`) & **public-evaluation best move** (`pub_best_move`)
 * **Board ↔ ID conversions** (`board_from_position_id`, `board_from_position_key`, `key_of_board`, `position_id`)
 * **Dice utilities** (`roll`) & **cube utilities** (`best_move`, `pub_eval_score`)
-* **Bear-off tools** (`bearoff_id_2_pos`, `bearoff_probabilities`)
+* **Bear-off tools** (`bearoff_id_2_pos`, `bearoff_probabilities`) & **one-checker race** (`one_checker_race`)
 * **Legal-move enumeration** (`moves`) & **probabilistic evaluation** (`probabilities`)
 * **Monte-Carlo rollouts** (`rollout`, `cubeful_rollout`)
+* **Cube decisions** (`evaluate_cube_decision`)
 * **Equity lookup** (`equities.value(xAway, oAway)`)
+* **Multiple nets in one process** (`net_load`, `net_use`, `net_save`) — hold a trainee net and a fixed reference net at once
 * **Neural-net training** (`Trainer` class for tuning weights against labeled positions)
+* **Self-play training pipeline** (`gnubg_nn.training` subpackage: self-play, disagreement mining, real-rollout-benchmark scoring, and downloading GNU Backgammon's published training data — plus the `gnubg-nn-buildnet`/`gnubg-nn-download` console scripts)
 * **Runtime engine tuning** via the `set` submodule
 
 ## 🧪 Platform Compatibility
 
-| Python Version | Linux x86\_64<br>(glibc ≥ 2.17) | Linux i686<br>(glibc ≥ 2.12) | macOS universal2  | Windows x86\_64 |
-|----------------| ------------------------------- | ---------------------------- |-------------------|-----------------|
-| **3.14**       | ✅                               | ✅                            | ✅ (macOS ≥ 10.14) | ✅               |
-| **3.13**       | ✅                               | ✅                            | ✅ (macOS ≥ 10.14) | ✅               |
-| **3.12**       | ✅                               | ✅                            | ✅ (macOS ≥ 10.14) | ✅               |
-| **3.11**       | ✅                               | ✅                            | ✅ (macOS ≥ 10.9)  | ✅               |
-| **3.10**       | ✅                               | ✅                            | ✅ (macOS ≥ 10.9)  | ✅               |
+Wheels actually published to PyPI, per `.github/workflows/release.yml`'s build matrix:
+
+| Python Version | Linux x86\_64<br>(glibc ≥ 2.17) | macOS arm64<br>(Apple Silicon) | Windows x86\_64 |
+|----------------| ------------------------------- | ------------------------------- |-----------------|
+| **3.13**       | ✅                               | ✅                               | ✅               |
+| **3.12**       | ✅                               | ✅                               | ✅               |
+| **3.11**       | ✅                               | ✅                               | ✅               |
+| **3.10**       | ✅                               | ✅                               | ✅               |
 
 ### Notes:
 
-* ✅ = Built and available
-* ❌ = Not built
-* macOS universal2 = Supports both ARM64 and x86-64 architectures
+* ✅ = Built and published
+* No Linux i686, macOS x86\_64 (Intel), or Python 3.14 wheels are published yet — `pip install gnubg-nn` on an Intel Mac currently has no prebuilt wheel to install. Tracked as a follow-up, not a documentation issue: widening this is a real CI change (new build targets, new toolchain risk), not just a table correction.
+* If you're on an unsupported platform, `pip install gnubg-nn` will attempt a source build (requires a C/C++ toolchain and Meson).
 
 ## Testing
 
-gnubg-nn-pypi has some basic unit testing. After installation, run:
+The test suite lives in this repo's `tests/` directory (not shipped in the installed package) and runs with pytest. From a repo checkout:
 
 ```bash
-python3 -m unittest discover -s gnubg_nn.tests
+pip install pytest
+pytest tests/
 ```
 ## AI-Assisted Development
 
