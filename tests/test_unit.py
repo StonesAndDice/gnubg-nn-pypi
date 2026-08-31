@@ -73,6 +73,47 @@ class TestGnubgBindings(unittest.TestCase):
         result = nn.one_checker_race(10)
         self.assertIsInstance(result, tuple)
 
+    def test_net_load_and_use(self):
+        # Reuse the package's own bundled weights file rather than
+        # requiring a second, separate net asset just for this test.
+        # Not os.environ["GNUBGHOME"]: the native module's own setenv()
+        # call (gnubgmodule.cpp) mutates the process's real environment,
+        # but Python's os.environ is a dict snapshot taken once at `os`
+        # import time -- it doesn't observe env changes a C extension
+        # makes afterwards. Locate the data dir the same way the module
+        # itself does instead: relative to its own installed location.
+        from pathlib import Path
+        weights_path = str(Path(nn.__file__).parent / "data" / "gnubg.weights")
+
+        handle_a = nn.net_load(weights_path)
+        handle_b = nn.net_load(weights_path)
+        self.assertIsNotNone(handle_a)
+        self.assertIsNotNone(handle_b)
+
+        nn.net_use(handle_a)
+        probs_a = nn.probabilities(self.board, 0)
+
+        nn.net_use(handle_b)
+        probs_b = nn.probabilities(self.board, 0)
+
+        # Same underlying weights file loaded via two independent handles
+        # must evaluate identically.
+        self.assertEqual(probs_a, probs_b)
+
+        # Switching back to the first handle must reproduce the same
+        # result again (no state corruption from the intervening switch).
+        nn.net_use(handle_a)
+        probs_a_again = nn.probabilities(self.board, 0)
+        self.assertEqual(probs_a, probs_a_again)
+
+    def test_net_use_rejects_non_handle(self):
+        with self.assertRaises(TypeError):
+            nn.net_use("not a handle")
+
+    def test_net_load_rejects_missing_file(self):
+        with self.assertRaises(RuntimeError):
+            nn.net_load("/nonexistent/path/gnubg.weights")
+
     # Optional: trainer object test (uncomment if stable)
     # def test_trainer(self):
     #     t = nn.trainer({"pos": self.board, "n": 0})

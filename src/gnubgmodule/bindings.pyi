@@ -1,10 +1,22 @@
-from typing import List, Tuple, Union
+from typing import Any, List, Tuple, Union
 
 # --- Core Types ---
 Board = List[List[int]]  # 2x25
 AnalyzeBoard = List[int]  # 26 elements
 Move = Tuple[int, int]
 MoveList = List[Move]
+NetHandle = Any  # opaque capsule from net_load()
+
+# --- Multi-net handles ---
+def net_load(path: str, cache_size: int = -1) -> NetHandle:
+    """Load a gnubg-format weights file into a new, independent net handle
+    (does not affect the currently active net -- see net_use())."""
+    ...
+
+def net_use(handle: NetHandle) -> None:
+    """Make a net_load() handle the active net for subsequent calls
+    (probabilities, best_move, moves, evaluate_cube_decision, etc.)."""
+    ...
 
 # --- Main API ---
 def classify(board: Board) -> int: ...

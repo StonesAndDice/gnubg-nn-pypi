@@ -61,6 +61,9 @@ __all__ = [
     "git_revision",
     # Training
     "Trainer",
+    # Multi-net handles
+    "net_load",
+    "net_use",
     # Submodules
     "set",
     # Position type constants

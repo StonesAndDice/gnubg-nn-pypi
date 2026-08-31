@@ -561,6 +561,61 @@ bool PyList_ToBoard(PyObject *listObj, int board[2][25]) {
   return true;
 }
 
+// net_load()/net_use(): expose the same LoadNet()/setNets() primitives
+// pygnubg's own py/pynets.cc wraps (net_get/net_set there) -- LoadNet()
+// reads a gnubg-format weights file into a freshly-allocated EvalNets_*
+// independent of whatever's currently active; setNets() swaps the process-wide
+// active net pointer to it (returning the previous one, discarded here).
+// Neither function is new engine behavior -- both already exist in this
+// package's own vendored eval.c, just weren't exposed to Python before. Lets a
+// caller hold multiple loaded nets (e.g. a trainee net and a fixed
+// reference net) and switch which one subsequent calls (probabilities(),
+// best_move(), evaluate_cube_decision(), etc.) use, matching pygnubg's
+// gnubg.net.get()/gnubg.net.set() pattern -- see docs/plans/
+// parallel-gnubg-nn-training.md in chaos-engine for why this was added.
+static const char *kNetCapsuleName = "gnubg_nn.EvalNets";
+
+static void py_net_capsule_destructor(PyObject *capsule) {
+  EvalNets_ *net =
+      static_cast<EvalNets_ *>(PyCapsule_GetPointer(capsule, kNetCapsuleName));
+  if (net) {
+    DestroyNets(net);
+  }
+}
+
+static PyObject *py_net_load(PyObject *self, PyObject *args) {
+  const char *path;
+  long cacheSize = -1;  // NOLINT(runtime/int) -- PyArg_ParseTuple's "l" format
+                        // requires long*
+  if (!PyArg_ParseTuple(args, "s|l", &path, &cacheSize))
+    return NULL;
+
+  EvalNets_ *net = LoadNet(path, cacheSize);
+  if (net == NULL) {
+    PyErr_SetString(PyExc_RuntimeError, "failed to load net");
+    return NULL;
+  }
+
+  return PyCapsule_New(net, kNetCapsuleName, py_net_capsule_destructor);
+}
+
+static PyObject *py_net_use(PyObject *self, PyObject *args) {
+  PyObject *capsule;
+  if (!PyArg_ParseTuple(args, "O", &capsule))
+    return NULL;
+
+  if (!PyCapsule_IsValid(capsule, kNetCapsuleName)) {
+    PyErr_SetString(PyExc_TypeError, "expected a net_load() handle");
+    return NULL;
+  }
+
+  EvalNets_ *net =
+      static_cast<EvalNets_ *>(PyCapsule_GetPointer(capsule, kNetCapsuleName));
+  setNets(net);
+
+  Py_RETURN_NONE;
+}
+
 static PyObject *py_classify(PyObject *self, PyObject *args) {
   PyObject *boardObj;
   if (!PyArg_ParseTuple(args, "O", &boardObj))
@@ -1825,6 +1880,14 @@ static PyType_Spec trainer_spec = {
 static PyObject *Trainer_Type = NULL;
 
 static PyMethodDef GnubgMethods[] = {
+    {"net_load", py_net_load, METH_VARARGS,
+     "net_load(path, cache_size=-1) -> handle\n"
+     "Load a gnubg-format weights file into a new, independent net handle "
+     "(does not affect the currently active net)."},
+    {"net_use", py_net_use, METH_VARARGS,
+     "net_use(handle) -> None\n"
+     "Make a net_load() handle the active net for subsequent calls "
+     "(probabilities, best_move, moves, evaluate_cube_decision, etc.)."},
     {"classify", py_classify, METH_VARARGS, "Classify a board position."},
     {"pub_best_move", py_pubbestmove, METH_VARARGS,
      "Get best move using public evaluation."},
